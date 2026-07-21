@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kirill Simukov · трекер каналов</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --panel2:#fafbfc; --line:#e4e7ec; --line2:#eef0f3;
+  --text:#1a1d23; --muted:#6b7280; --accent:#2563eb; --accent-soft:#e8f0fe;
+  --up:#059669; --down:#dc2626; --warn:#b45309; --warn-soft:#fef3c7;
+  --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f1115;--panel:#171a21;--panel2:#1c2029;--line:#262b34;--line2:#20242d;
+  --text:#e7eaef;--muted:#9aa2ad;--accent:#5b8cff;--accent-soft:#1b2740;
+  --up:#34d399;--down:#f87171;--warn:#fbbf24;--warn-soft:#2a2410;--shadow:none;}
+}
+:root[data-theme="light"]{
+  --bg:#f4f5f7;--panel:#ffffff;--panel2:#fafbfc;--line:#e4e7ec;--line2:#eef0f3;
+  --text:#1a1d23;--muted:#6b7280;--accent:#2563eb;--accent-soft:#e8f0fe;
+  --up:#059669;--down:#dc2626;--warn:#b45309;--warn-soft:#fef3c7;
+  --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--panel2:#1c2029;--line:#262b34;--line2:#20242d;
+  --text:#e7eaef;--muted:#9aa2ad;--accent:#5b8cff;--accent-soft:#1b2740;
+  --up:#34d399;--down:#f87171;--warn:#fbbf24;--warn-soft:#2a2410;--shadow:none;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
+.num{font-variant-numeric:tabular-nums}
+header{position:sticky;top:0;z-index:20;background:var(--panel);border-bottom:1px solid var(--line);
+  padding:12px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:var(--shadow);}
+.brand{font-weight:700;font-size:16px;letter-spacing:.2px;margin-right:6px;white-space:nowrap;}
+.brand span{color:var(--accent)}
+.spacer{flex:1}
+button{font-family:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--text);
+  padding:7px 12px;border-radius:8px;cursor:pointer;transition:.12s;white-space:nowrap;}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.primary:hover{opacity:.9;color:#fff}
+button.ghost{background:transparent}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 20px 60px;}
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{padding:8px 14px;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);font-weight:600;
+  font-size:13.5px;white-space:nowrap}
+.tab.active{color:var(--accent);border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 14px 14px 18px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden}
+.card .stripe{position:absolute;left:0;top:0;bottom:0;width:4px}
+.card h3{margin:0;font-size:15px}
+.lbl{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px}
+.empty{text-align:center;color:var(--muted);padding:50px 0}
+.sumcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
+.sumcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+.sumcard .v{font-size:26px;font-weight:800;margin-top:4px;letter-spacing:-.5px}
+.tbl-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--panel)}
+.tbl-wrap table{border:none;border-radius:0;box-shadow:none;min-width:720px}
+th,td{text-align:right;padding:10px 12px;border-bottom:1px solid var(--line2);font-size:13.5px}
+th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;
+  background:var(--panel2);position:sticky;top:0;z-index:1}
+th:first-child,td:first-child{text-align:left}
+tbody tr:last-child td{border-bottom:none}
+tfoot td{border-top:1px solid var(--line);border-bottom:none;font-weight:700;background:var(--panel2)}
+input[type=text],input[type=email],input[type=number],select,textarea{font-family:inherit;font-size:13px;color:var(--text);
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+input[type=number]{-moz-appearance:textfield;text-align:right}
+input.cellin{border:1px solid transparent;background:transparent;padding:5px 7px;border-radius:7px;
+  text-align:right;font-variant-numeric:tabular-nums;font-size:13.5px;min-width:66px}
+input.cellin:hover{border-color:var(--line);background:var(--panel2)}
+input.cellin:focus{border-color:var(--accent);background:var(--panel);outline:none}
+.saved{font-size:12px;color:var(--up);opacity:0;transition:.3s}
+.saved.show{opacity:1}
+.saved.err{color:var(--down);opacity:1}
+.hint{font-size:12px;color:var(--muted)}
+/* неделя */
+.wknav{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);margin-bottom:16px;flex-wrap:wrap}
+.wknav b{font-size:15px}
+.wknav .navbtn{padding:5px 11px}
+.chname{display:flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap}
+.chname .cdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.normbar{height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:5px;min-width:80px}
+.normbar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.normbar i.done{background:var(--up)}
+.normtxt{font-size:11px;color:var(--muted);font-weight:400;margin-top:3px}
+/* конверсия */
+.cv{font-weight:700}
+.cv.bad{color:var(--down)} .cv.good{color:var(--up)} .cv.mid{color:var(--text)}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:600;
+  border:1px solid var(--line);background:var(--panel2);color:var(--muted);white-space:nowrap}
+.badge.bad{background:color-mix(in srgb,var(--down) 14%,var(--panel));border-color:color-mix(in srgb,var(--down) 40%,var(--line));color:var(--down)}
+.badge.good{background:color-mix(in srgb,var(--up) 14%,var(--panel));border-color:color-mix(in srgb,var(--up) 40%,var(--line));color:var(--up)}
+.badge.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 40%,var(--line));color:var(--warn)}
+.callout{border-radius:12px;padding:13px 15px;margin:16px 0;display:flex;gap:11px;align-items:flex-start;
+  border:1px solid var(--line);background:var(--panel2);font-size:13.5px}
+.callout .ic{font-size:17px;line-height:1.3;flex-shrink:0}
+.callout.blue{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,var(--line))}
+.callout.yellow{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 30%,var(--line))}
+.callout.red{background:color-mix(in srgb,var(--down) 10%,var(--panel));border-color:color-mix(in srgb,var(--down) 30%,var(--line))}
+h2.sec{font-size:16px;margin:26px 0 12px}
+h2.sec:first-child{margin-top:4px}
+/* шаблоны */
+details.tpl{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;
+  box-shadow:var(--shadow);overflow:hidden}
+details.tpl summary{padding:13px 16px;cursor:pointer;font-weight:600;list-style:none;display:flex;
+  align-items:center;gap:9px}
+details.tpl summary::-webkit-details-marker{display:none}
+details.tpl summary::before{content:'▸';color:var(--muted);transition:.15s;font-size:12px}
+details.tpl[open] summary::before{transform:rotate(90deg)}
+details.tpl[open] summary{border-bottom:1px solid var(--line2)}
+.tpl-body{padding:14px 16px}
+.tpl-body h5{margin:16px 0 7px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.tpl-body h5:first-child{margin-top:0}
+blockquote{margin:0;padding:11px 14px;border-left:3px solid var(--accent);background:var(--panel2);
+  border-radius:0 8px 8px 0;white-space:pre-wrap;font-size:13.5px}
+.why{font-size:12.5px;color:var(--muted);margin-top:8px}
+.copybtn{margin-top:7px;padding:4px 10px;font-size:12px}
+/* задачи */
+.task{display:flex;align-items:flex-start;gap:11px;background:var(--panel);border:1px solid var(--line);
+  border-radius:10px;padding:11px 13px;margin-bottom:7px;box-shadow:var(--shadow);cursor:pointer;transition:.12s}
+.task:hover{border-color:var(--accent)}
+.task.done{opacity:.55}
+.task.done .ttext{text-decoration:line-through}
+.tbox{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);display:flex;align-items:center;
+  justify-content:center;font-size:12px;color:transparent;flex-shrink:0;margin-top:1px;transition:.12s}
+.task.done .tbox{background:var(--up);border-color:var(--up);color:#fff}
+/* каналы */
+.ch-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 15px 15px 19px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden}
+.ch-card .stripe{position:absolute;left:0;top:0;bottom:0;width:4px}
+.ch-card h3{margin:0 0 3px;font-size:14.5px}
+.ch-row{display:flex;gap:8px;font-size:12.5px;margin-top:7px;color:var(--muted)}
+.ch-row b{color:var(--text);font-weight:600;text-align:right;margin-left:auto}
+.ch-card select{margin-top:11px}
+.prio{position:absolute;top:12px;right:12px}
+/* вход */
+.login{max-width:400px;margin:70px auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  padding:28px;box-shadow:var(--shadow);text-align:center}
+.login h1{font-size:20px;margin:0 0 6px}
+.login p{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+.login input{margin-bottom:11px;text-align:center}
+@media(max-width:640px){
+  .wrap{padding:14px 12px 50px} header{padding:10px 12px}
+  .brand{font-size:14px;width:100%}
+}
+</style>
+</head>
+<body>
+
+<div id="app" style="display:none">
+<header>
+  <div class="brand">Kirill Simukov<span> · </span>трекер каналов</div>
+  <span class="saved" id="saved"></span>
+  <div class="spacer"></div>
+  <button class="ghost" onclick="toggleTheme()" title="Светлая / темная тема">🌗</button>
+  <button class="ghost" onclick="doExport()">Экспорт JSON</button>
+  <button class="ghost" id="whoBtn" onclick="signOut()" title="Выйти"></button>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab active" data-view="week"    onclick="setView('week')">Неделя</div>
+    <div class="tab"        data-view="summary" onclick="setView('summary')">Сводка</div>
+    <div class="tab"        data-view="channels"onclick="setView('channels')">Каналы</div>
+    <div class="tab"        data-view="tpl"     onclick="setView('tpl')">Шаблоны</div>
+    <div class="tab"        data-view="tasks"   onclick="setView('tasks')">Задачи</div>
+  </div>
+  <div id="weekView"></div>
+  <div id="sumView" style="display:none"></div>
+  <div id="chView" style="display:none"></div>
+  <div id="tplView" style="display:none"></div>
+  <div id="taskView" style="display:none"></div>
+</div>
+</div>
+
+<div id="loginBox" class="login" style="display:none">
+  <h1>Трекер каналов</h1>
+  <p>Вход по одноразовой ссылке на почту</p>
+  <input type="email" id="email" placeholder="почта" autocomplete="email">
+  <button class="primary" style="width:100%" onclick="sendLink()" id="loginBtn">Прислать ссылку</button>
+  <p id="loginMsg" style="margin-top:14px;margin-bottom:0"></p>
+</div>
+
+<div id="boot" class="empty">Загрузка...</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+/* ============ справочник каналов (из конспекта «Охота на лидов») ============ */
+const CHANNELS = [
+  {key:'maps',    n:1, short:'Карты',     name:'Обход карточек на Картах', color:'#ef4444',
+   product:'Сайт + карты',            norm:'150 карточек, 20 диалогов',        normN:150,
+   eta:'1-2 недели',    need:'Ничего, можно начинать сегодня', prio:true},
+  {key:'partner', n:2, short:'Партнерка', name:'Партнерка',                color:'#f59e0b',
+   product:'Сайт',                    norm:'10 новых контактов',               normN:10,
+   eta:'1-2 месяца',    need:'Условия: 20-30% или фикс. Написать Мише Виртуалоф'},
+  {key:'chats',   n:3, short:'Чаты',      name:'ТГ-чаты и комментинг',     color:'#2aabee',
+   product:'Сайт',                    norm:'5 ответов в чатах + 5 комментов',  normN:10,
+   eta:'2-3 месяца',    need:'Вступить в 10 чатов, подписаться на 5 крупных каналов'},
+  {key:'boards',  n:4, short:'Площадки',  name:'Площадки заявок',          color:'#8b5cf6',
+   product:'Карты отдельно, сайт',    norm:'Авито активно, 5 откликов на Workspace', normN:5,
+   eta:'2-4 недели',    need:'Объявление на Авито, профиль с кейсами на Workspace', prio:true},
+  {key:'offline', n:5, short:'Оффлайн',   name:'Оффлайн и локалка',        color:'#10b981',
+   product:'Сайт, чек выше',          norm:'1 мероприятие в 2 недели',         normN:1,
+   eta:'1-3 месяца',    need:'Найти календарь бизнес-завтраков Краснодара, ТПП'},
+  {key:'return',  n:6, short:'Возврат',   name:'Возврат и допродажа',      color:'#ec4899',
+   product:'Карты текущим, сайт старым', norm:'10 старых контактов',            normN:10,
+   eta:'Несколько дней',need:'Выгрузить список всех, кто получал КП', prio:true},
+  {key:'trigger', n:7, short:'Триггеры',  name:'Триггерный поиск',         color:'#64748b',
+   product:'Сайт',                    norm:'20 новых ИП и ООО',                normN:20,
+   eta:'2-4 недели',    need:'Доступ к Rusprofile или Контур.Фокус'},
+];
+const METRICS = [
+  {k:'touches', l:'Касаний'},  {k:'replies', l:'Ответов'}, {k:'dialogs', l:'Диалогов'},
+  {k:'calls',   l:'Созвонов'}, {k:'deals',   l:'Сделок'},
+  {k:'revenue', l:'Выручка'},  {k:'hours',   l:'Часов'},
+];
+const STATUSES = ['Не запущен','Запущен','На паузе','Закрыт'];
+/* нормативы конверсии: bad - ниже плохо, good - выше хорошо */
+const CONV = [
+  {k:'reply',   l:'Касание в ответ, холод', from:'touches', to:'replies', bad:10, good:30,
+   norm:'15-25%', fix:'Менять первую фразу, а не количество'},
+  {k:'dialog',  l:'Ответ в диалог',         from:'replies', to:'dialogs', bad:30, good:60,
+   norm:'50%',    fix:'Слишком рано продаешь, задавай вопрос'},
+  {k:'call',    l:'Диалог в созвон',        from:'dialogs', to:'calls',   bad:20, good:50,
+   norm:'30-40%', fix:'Нет причины созваниваться, дай мини-аудит'},
+  {k:'deal',    l:'Созвон в сделку',        from:'calls',   to:'deals',   bad:15, good:40,
+   norm:'25-35%', fix:'Проблема в оффере и цене, не в лидогене'},
+  {k:'through', l:'Холод в сделку, сквозная',from:'touches',to:'deals',   bad:1,  good:5,
+   norm:'2-5%',   fix:'Смотри, на каком шаге проседает'},
+];
+const TASKS = [
+  'Разместить объявление на Авито, текст готов в шаблонах',
+  'Написать Мише Виртуалоф по поводу базы клиентов под карты',
+  'Выгрузить всех, кто получал КП и не купил, за последние полгода',
+  'Написать 10 старым контактам по шаблону реанимации',
+  'Попросить рекомендацию у 3 довольных клиентов',
+  'Вступить в 10 бизнес-чатов Краснодара',
+  'Найти сервисы поиска лидов в Telegram, выбрать один',
+  'Проверить доступ к Rusprofile или Контур.Фокус по новым ИП',
+  'Найти сервисы автоматизации обхода карточек, следить за lovlead',
+  'Заполнить профиль на Workspace, добавить 3 кейса',
+];
+const TEMPLATES = [
+  {t:'1. Карты: у бизнеса нет сайта или вместо сайта инстаграм', parts:[
+    {h:'WhatsApp или Telegram, после короткого звонка', q:'Добрый день. Смотрел карточки автосервисов в Краснодаре по работе, зацепился за вашу. У вас 4.8 и 90 отзывов, поток людей идет. Но в карточке вместо сайта ссылка на инстаграм, и человек, который хочет посмотреть цены и записаться, просто уходит. Сделал бы вам разбор на одну страницу, что теряете и как это закрыть. Бесплатно, без обязательств. Скинуть?',
+     why:'Сначала комплимент по факту, потом конкретная дырка, потом бесплатный шаг вместо продажи. Просьба в конце требует ответа «да» или «нет», а не размышления.'},
+    {h:'Вариант для конструктора на поддомене', q:'Добрый день. У вас сайт на поддомене tilda.ws, а отзывов на картах уже 90. Обычно на этом этапе конструктор начинает мешать: не индексируется толком и доверия меньше. Показать, как выглядит нормальный сайт в вашей нише и сколько это стоит?'},
+  ]},
+  {t:'2. Партнерка: таргетологи, дизайнеры, веб-студии, бухгалтеры', parts:[
+    {h:'Первое сообщение', q:'Привет. Кирилл, делаю сайты и настраиваю Яндекс.Карты бизнесам в Краснодаре. Пишу по делу: у тебя наверняка регулярно попадаются клиенты, которым нужен нормальный сайт или упаковка карточки, а ты этим не занимаешься. Предлагаю простую схему: ты передаешь контакт, я веду сделку и плачу 20% с чека. Средний чек 100-150к, то есть 20-30к тебе за один контакт. Интересно обсудить?'},
+    {h:'Если ответил «интересно»', q:'Отлично. Тогда два вопроса, чтобы не тратить твое время: сколько примерно таких клиентов в месяц мимо тебя проходит и что тебе удобнее, процент с каждой сделки или фикс за приведенного? И скину пару кейсов, чтобы ты понимал, что передаешь клиента в нормальные руки.'},
+    {h:'Отдельно, для Миши Виртуалоф про базу', q:'Миша, привет. Вопрос по твоей базе клиентов. Хочу предложить им настройку Яндекс.Карт, это не конкурирует с тем, что делаешь ты. Готов либо платить процент с каждой сделки, либо обсудить доступ к базе на твоих условиях. Как тебе такое?'},
+  ]},
+  {t:'3. ТГ-чаты: как писать, чтобы не выглядеть продажником', parts:[
+    {h:'В чате не пишем офферы вообще. Первые 2-3 недели только отвечаем на чужие вопросы', q:'По картам частая история: карточка заполнена, а звонков нет. Обычно дело в двух вещах - пустой раздел «Товары и услуги» и нет ответов на отзывы. Яндекс это ранжирует. Если скинете ссылку на карточку, гляну и скажу конкретно, что у вас.'},
+    {h:'Когда написал в личку', q:'Глянул. Три вещи бросаются в глаза: нет фото интерьера, 12 отзывов без единого ответа и не заполнены услуги. По моему опыту это дает разницу в позициях в разы. Расписать подробно, что делать?',
+     why:'Комментинг под чужими постами: одна конкретная мысль по теме поста, никаких «согласен» и «отличный пост». Цель комментария - чтобы зашли в профиль, а не чтобы кликнули по ссылке.'},
+  ]},
+  {t:'4. Площадки: текст объявления и отклик на тендер', parts:[
+    {h:'Авито, заголовок', q:'Настройка Яндекс.Карт: выведу карточку в топ по вашему району'},
+    {h:'Авито, текст', q:'Занимаюсь продвижением в Яндекс.Картах и делаю сайты. Что получаете: карточка в топ-3 выдачи по вашим запросам, заполненные товары и услуги под SEO, работа с отзывами, фото и рубрики.\n\nРаботал со стоматологиями, автосервисами, салонами. Начинаю с бесплатного аудита: показываю, на какой вы позиции сейчас и что мешает подняться.\n\nТарифы от 25 000 ₽. Сайт под ключ от 100 000 ₽.\n\nНапишите название бизнеса - пришлю разбор вашей карточки в течение дня.'},
+    {h:'Отклик на Workspace, всегда с конкретикой по их брифу', q:'Здравствуйте. По вашей задаче: нужен сайт для клиники с записью и разделом врачей. Делал похожее, вот кейс - ссылка. Что предложу по вашей ситуации: собрать структуру от запросов, которые уже ищут в вашем городе, а не от красивой картинки. Сроки 3-4 недели, бюджет укладывается в ваш диапазон. Готов созвониться на 15 минут и показать, как это будет выглядеть.',
+     why:'Отклик без упоминания деталей их задачи не отправляем. Шаблонные отклики на Workspace не читают.'},
+  ]},
+  {t:'5. Оффлайн: что говорить на нетворкинге', parts:[
+    {h:'На вопрос «чем занимаешься» не говорить «делаю сайты»', q:'Помогаю бизнесам с точкой получать клиентов из интернета. Обычно это связка: карточка на Яндекс.Картах в топе плюс сайт, куда с нее ведут. Недавно у стоматологии за два месяца выросло с 8 позиции до 2.'},
+    {h:'Дальше сразу вопрос про них, не про себя', q:'А у вас как с этим? Карточка на картах есть, отзывы собираете?'},
+    {h:'Не продавать на месте. Взять контакт и написать на следующий день', q:'Кирилл, вчера общались на завтраке в ТПП. Обещал глянуть вашу карточку - посмотрел, есть три вещи, которые можно поправить за неделю. Скинуть в двух словах или удобнее созвониться?'},
+  ]},
+  {t:'6. Возврат: тем, кто получил КП и не купил, и старым клиентам', parts:[
+    {h:'Реанимация КП, через 2-3 месяца, обязательно с новым поводом', q:'Добрый день. Кирилл, весной делал вам КП по сайту. Не с продажей пишу: смотрел вашу карточку на картах, у вас за это время прибавилось отзывов, поток растет. Заодно заметил, что конкуренты в вашем районе за лето подтянулись. Если тема сайта еще актуальна - у меня появился более короткий вариант под запуск, дешевле того, что предлагал. Актуально?'},
+    {h:'Клиенту сайта, допродажа карт, через 1-2 месяца после сдачи', q:'Добрый день. Как сайт, заявки идут? Заодно глянул вашу карточку на Яндекс.Картах: сайт мы сделали, а на карте вы на 7 позиции и услуги не заполнены. Люди ищут вас в первую очередь там. Расписать, что можно сделать?'},
+    {h:'Просьба о рекомендации, не в лоб', q:'Слушайте, у меня к вам просьба. Не «посоветуйте меня кому-нибудь», а конкретнее: у кого из ваших знакомых есть точка с карточкой на картах - салон, клиника, сервис? Готов сделать им бесплатный разбор карточки от вашего имени. Вам плюс к отношениям, мне возможный клиент.'},
+  ]},
+  {t:'7. Триггеры: новые ИП, открытия, реклама без сайта', parts:[
+    {h:'Новое юрлицо, первый месяц', q:'Добрый день. Увидел, что вы недавно открылись. Пишу пока не с предложением, а с наблюдением: на этом этапе почти все вкладываются в вывеску и ремонт, а карточку на картах заводят через полгода. При этом первые полгода люди ищут вас именно там. Показать, как это выглядит и сколько стоит закрыть на старте?'},
+    {h:'Крутят рекламу и ведут в директ инстаграма', q:'Добрый день. Видел вашу рекламу. Вопрос по делу: вы платите за клик, а человек попадает в инстаграм, где ему надо листать и писать в директ. Часть отваливается на этом шаге. Считали, сколько стоит заявка сейчас? Обычно посадочная снижает цену заявки заметно.'},
+  ]},
+];
+
+/* ============ состояние ============ */
+let sb = null, user = null;
+let entries = {};              // "week|channel" -> {touches,...}
+let state = {status:{}, tasks:{}};
+let curWeek = mondayOf(new Date());
+const THEME_KEY = 'ch_tracker_theme';
+
+/* ============ даты ============ */
+function mondayOf(d){
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const dow = (x.getDay() + 6) % 7;            // пн=0
+  x.setDate(x.getDate() - dow);
+  return iso(x);
+}
+function iso(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function parseISO(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function shiftWeek(ws, n){ const d = parseISO(ws); d.setDate(d.getDate() + n*7); return iso(d); }
+function weekLabel(ws){
+  const a = parseISO(ws), b = parseISO(ws); b.setDate(b.getDate()+6);
+  const M = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const sameM = a.getMonth() === b.getMonth();
+  return a.getDate() + (sameM ? '' : ' ' + M[a.getMonth()]) + ' - ' + b.getDate() + ' ' + M[b.getMonth()];
+}
+/* номер недели с первой заполненной, чтобы «Неделя 1» была там, где начал */
+function weekNo(ws){
+  const keys = Object.keys(entries).map(k => k.split('|')[0]);
+  if(!keys.length) return null;
+  const first = keys.sort()[0];
+  const diff = Math.round((parseISO(ws) - parseISO(first)) / 6048e5);
+  return diff >= 0 ? diff + 1 : null;
+}
+
+/* ============ данные ============ */
+function ek(w, c){ return w + '|' + c; }
+function getEntry(w, c){
+  return entries[ek(w,c)] || {touches:0,replies:0,dialogs:0,calls:0,deals:0,revenue:0,hours:0};
+}
+function sumOver(filterFn){
+  const t = {touches:0,replies:0,dialogs:0,calls:0,deals:0,revenue:0,hours:0};
+  for(const k in entries){
+    const [w,c] = k.split('|');
+    if(filterFn && !filterFn(w,c)) continue;
+    for(const m in t) t[m] += Number(entries[k][m]) || 0;
+  }
+  return t;
+}
+function pct(a, b){ return b > 0 ? (a / b * 100) : null; }
+function convClass(v, c){
+  if(v === null) return 'mid';
+  if(v < c.bad) return 'bad';
+  if(v >= c.good) return 'good';
+  return 'mid';
+}
+function fmt(n, dec){
+  if(n === null || n === undefined) return '-';
+  return Number(n).toLocaleString('ru-RU', {maximumFractionDigits: dec === undefined ? 0 : dec});
+}
+function fmtPct(v){ return v === null ? '-' : fmt(v, 1) + '%'; }
+
+/* ============ сохранение ============ */
+let saveTimers = {};
+function flash(msg, isErr){
+  const el = document.getElementById('saved');
+  el.textContent = msg;
+  el.className = 'saved show' + (isErr ? ' err' : '');
+  if(!isErr) setTimeout(() => { el.className = 'saved'; }, 1600);
+}
+async function saveEntry(w, c){
+  const key = ek(w,c);
+  clearTimeout(saveTimers[key]);
+  saveTimers[key] = setTimeout(async () => {
+    const e = getEntry(w,c);
+    const row = {user_id:user.id, week_start:w, channel:c,
+      touches:+e.touches||0, replies:+e.replies||0, dialogs:+e.dialogs||0,
+      calls:+e.calls||0, deals:+e.deals||0, revenue:+e.revenue||0, hours:+e.hours||0};
+    const {error} = await sb.from('week_entries').upsert(row, {onConflict:'user_id,week_start,channel'});
+    if(error) flash('не сохранилось: ' + error.message, true); else flash('сохранено');
+  }, 500);
+}
+async function saveState(){
+  clearTimeout(saveTimers.__state);
+  saveTimers.__state = setTimeout(async () => {
+    const {error} = await sb.from('app_state').upsert({user_id:user.id, data:state}, {onConflict:'user_id'});
+    if(error) flash('не сохранилось: ' + error.message, true); else flash('сохранено');
+  }, 500);
+}
+async function loadAll(){
+  const [we, as] = await Promise.all([
+    sb.from('week_entries').select('*'),
+    sb.from('app_state').select('data').maybeSingle(),
+  ]);
+  if(we.error) throw we.error;
+  entries = {};
+  for(const r of we.data || []){
+    entries[ek(r.week_start, r.channel)] = {touches:r.touches, replies:r.replies, dialogs:r.dialogs,
+      calls:r.calls, deals:r.deals, revenue:Number(r.revenue), hours:Number(r.hours)};
+  }
+  if(as.data && as.data.data) state = Object.assign({status:{}, tasks:{}}, as.data.data);
+}
+
+/* ============ вкладка «Неделя» ============ */
+function renderWeek(){
+  const no = weekNo(curWeek);
+  const isNow = curWeek === mondayOf(new Date());
+  let h = `<div class="wknav">
+    <button class="navbtn ghost" onclick="goWeek(-1)">←</button>
+    <b>${no ? 'Неделя ' + no + ': ' : ''}${weekLabel(curWeek)}</b>
+    <button class="navbtn ghost" onclick="goWeek(1)">→</button>
+    ${isNow ? '<span class="badge good">текущая</span>' : '<button class="navbtn ghost" onclick="goNow()">к текущей</button>'}
+    <div class="spacer"></div>
+    <span class="hint">Заполняй в пятницу. Часы - честно, включая поиск и подготовку</span>
+  </div>`;
+
+  h += `<div class="tbl-wrap"><div class="tbl-scroll"><table><thead><tr>
+    <th>Канал</th>${METRICS.map(m => `<th>${m.l}</th>`).join('')}<th>Норма</th></tr></thead><tbody>`;
+  for(const ch of CHANNELS){
+    const e = getEntry(curWeek, ch.key);
+    const done = Math.min(100, ch.normN ? (e.touches / ch.normN * 100) : 0);
+    h += `<tr><td><div class="chname"><i class="cdot" style="background:${ch.color}"></i>${ch.n}. ${ch.short}</div></td>`;
+    for(const m of METRICS){
+      h += `<td><input class="cellin num" type="number" min="0" step="${m.k==='hours'?'0.5':'1'}"
+        value="${e[m.k] || ''}" placeholder="0"
+        onchange="setVal('${ch.key}','${m.k}',this.value)"></td>`;
+    }
+    h += `<td style="min-width:120px">
+      <div class="normbar"><i class="${done>=100?'done':''}" style="width:${done}%"></div></div>
+      <div class="normtxt">${e.touches || 0} из ${ch.normN} · ${ch.norm}</div></td></tr>`;
+  }
+  const tot = sumOver(w => w === curWeek);
+  h += `</tbody><tfoot><tr><td>Итого</td>${METRICS.map(m =>
+    `<td class="num">${fmt(tot[m.k], m.k==='hours'?1:0)}</td>`).join('')}<td></td></tr></tfoot></table></div></div>`;
+
+  // конверсия недели
+  h += `<h2 class="sec">Конверсия за неделю</h2>` + convTable(tot);
+  h += `<div class="callout red"><span class="ic">📉</span><div>Если проседает <b>ответ на касание</b> - виновата первая фраза.
+    Если проседает <b>созвон в сделку</b> - виноват оффер, лидоген тут ни при чем.
+    Не наращивай объем, пока не починил конверсию, иначе просто сожжешь больше времени на том же проценте.</div></div>`;
+  document.getElementById('weekView').innerHTML = h;
+}
+function convTable(t){
+  let h = `<div class="tbl-wrap"><div class="tbl-scroll"><table><thead><tr>
+    <th>Показатель</th><th>Факт</th><th>Норма</th><th>Оценка</th><th style="text-align:left">Что делать, если плохо</th>
+    </tr></thead><tbody>`;
+  for(const c of CONV){
+    const v = pct(t[c.to], t[c.from]);
+    const cls = convClass(v, c);
+    const label = v === null ? 'нет данных' : cls === 'bad' ? 'плохо' : cls === 'good' ? 'хорошо' : 'норма';
+    h += `<tr><td>${c.l}</td>
+      <td class="num cv ${cls}">${fmtPct(v)}</td>
+      <td class="num" style="color:var(--muted)">${c.norm}</td>
+      <td><span class="badge ${cls === 'mid' ? '' : cls}">${label}</span></td>
+      <td style="text-align:left;color:var(--muted)">${c.fix}</td></tr>`;
+  }
+  return h + `</tbody></table></div></div>`;
+}
+function setVal(chKey, metric, val){
+  const key = ek(curWeek, chKey);
+  if(!entries[key]) entries[key] = {touches:0,replies:0,dialogs:0,calls:0,deals:0,revenue:0,hours:0};
+  entries[key][metric] = val === '' ? 0 : Number(val);
+  saveEntry(curWeek, chKey);
+  renderWeek();
+}
+function goWeek(n){ curWeek = shiftWeek(curWeek, n); renderWeek(); }
+function goNow(){ curWeek = mondayOf(new Date()); renderWeek(); }
+
+/* ============ вкладка «Сводка» ============ */
+function renderSummary(){
+  const weeks = [...new Set(Object.keys(entries).map(k => k.split('|')[0]))].sort();
+  if(!weeks.length){
+    document.getElementById('sumView').innerHTML =
+      `<div class="empty">Пока нечего сводить. Заполни первую неделю на вкладке «Неделя».</div>`;
+    return;
+  }
+  const tot = sumOver();
+  const rev = tot.revenue, hrs = tot.hours;
+  let h = `<div class="sumcards">
+    <div class="sumcard"><div class="lbl">Недель</div><div class="v num">${weeks.length}</div></div>
+    <div class="sumcard"><div class="lbl">Касаний</div><div class="v num">${fmt(tot.touches)}</div></div>
+    <div class="sumcard"><div class="lbl">Диалогов</div><div class="v num">${fmt(tot.dialogs)}</div></div>
+    <div class="sumcard"><div class="lbl">Сделок</div><div class="v num">${fmt(tot.deals)}</div></div>
+    <div class="sumcard"><div class="lbl">Выручка</div><div class="v num">${fmt(rev)} ₽</div></div>
+    <div class="sumcard"><div class="lbl">Выручка в час</div><div class="v num">${hrs > 0 ? fmt(rev/hrs) + ' ₽' : '-'}</div></div>
+  </div>`;
+
+  h += `<h2 class="sec">Конверсия за все время</h2>` + convTable(tot);
+
+  h += `<h2 class="sec">По каналам</h2><div class="tbl-wrap"><div class="tbl-scroll"><table><thead><tr>
+    <th>Канал</th><th>Недель</th><th>Касаний</th><th>Диалогов</th><th>Сделок</th>
+    <th>Выручка</th><th>Часов</th><th>₽ / час</th><th>Сквозная</th><th style="text-align:left">Вердикт</th>
+    </tr></thead><tbody>`;
+  for(const ch of CHANNELS){
+    const t = sumOver((w,c) => c === ch.key);
+    const wk = weeks.filter(w => entries[ek(w,ch.key)] &&
+      Object.values(entries[ek(w,ch.key)]).some(v => Number(v) > 0)).length;
+    const perH = t.hours > 0 ? t.revenue / t.hours : null;
+    const thr = pct(t.deals, t.touches);
+    // правило из конспекта: 3 недели при выполненной норме без единого диалога - закрывать
+    let verdict = '<span class="badge">мало данных</span>', vtxt = '';
+    if(wk >= 3){
+      if(t.dialogs === 0){
+        verdict = '<span class="badge bad">закрывать</span>';
+        vtxt = '3 недели без единого диалога';
+      } else if(t.deals > 0){
+        verdict = '<span class="badge good">кормит</span>';
+        vtxt = perH !== null ? fmt(perH) + ' ₽ за час' : '';
+      } else {
+        verdict = '<span class="badge warn">под вопросом</span>';
+        vtxt = 'диалоги есть, сделок нет - смотри оффер';
+      }
+    } else if(wk > 0){
+      vtxt = 'нужно ' + (3 - wk) + ' нед.';
+    }
+    h += `<tr><td><div class="chname"><i class="cdot" style="background:${ch.color}"></i>${ch.n}. ${ch.short}</div></td>
+      <td class="num">${wk}</td><td class="num">${fmt(t.touches)}</td><td class="num">${fmt(t.dialogs)}</td>
+      <td class="num">${fmt(t.deals)}</td><td class="num">${fmt(t.revenue)}</td>
+      <td class="num">${fmt(t.hours,1)}</td><td class="num">${perH === null ? '-' : fmt(perH)}</td>
+      <td class="num cv ${convClass(thr, CONV[4])}">${fmtPct(thr)}</td>
+      <td style="text-align:left">${verdict}${vtxt ? ' <span class="hint">' + vtxt + '</span>' : ''}</td></tr>`;
+  }
+  h += `</tbody></table></div></div>`;
+
+  h += `<h2 class="sec">По неделям</h2><div class="tbl-wrap"><div class="tbl-scroll"><table><thead><tr>
+    <th>Неделя</th>${METRICS.map(m => `<th>${m.l}</th>`).join('')}<th>Ответ %</th><th>Сквозная %</th>
+    </tr></thead><tbody>`;
+  for(const w of weeks){
+    const t = sumOver(ww => ww === w);
+    const r = pct(t.replies, t.touches), thr = pct(t.deals, t.touches);
+    h += `<tr><td>${weekNo(w) ? 'Н' + weekNo(w) + ' · ' : ''}${weekLabel(w)}</td>
+      ${METRICS.map(m => `<td class="num">${fmt(t[m.k], m.k==='hours'?1:0)}</td>`).join('')}
+      <td class="num cv ${convClass(r, CONV[0])}">${fmtPct(r)}</td>
+      <td class="num cv ${convClass(thr, CONV[4])}">${fmtPct(thr)}</td></tr>`;
+  }
+  h += `</tbody></table></div></div>`;
+  document.getElementById('sumView').innerHTML = h;
+}
+
+/* ============ вкладка «Каналы» ============ */
+function renderChannels(){
+  let h = `<div class="callout blue"><span class="ic">⚡</span><div>Раз в неделю, в пятницу, заполняешь вкладку «Неделя».
+    Через 3 недели видно, какой канал кормит, а какой съедает время. Канал, который за 3 недели не дал
+    ни одного диалога при выполненной норме, закрываем и не жалеем.</div></div>`;
+  h += `<div class="callout yellow"><span class="ic">🎯</span><div>Не запускать все семь сразу. Первые две недели:
+    каналы <b>1</b> и <b>6</b> плюс объявление на Авито. Они дают отклик за дни и не требуют бюджета.
+    Остальное подключать по одному, когда первые два начнут работать на автомате.</div></div>`;
+  h += `<div class="grid">`;
+  for(const ch of CHANNELS){
+    const st = state.status[ch.key] || 'Не запущен';
+    h += `<div class="ch-card"><div class="stripe" style="background:${ch.color}"></div>
+      ${ch.prio ? '<span class="badge warn prio">старт</span>' : ''}
+      <h3>${ch.n}. ${ch.name}</h3>
+      <div class="ch-row"><span>Продукт</span><b>${ch.product}</b></div>
+      <div class="ch-row"><span>Норма в неделю</span><b>${ch.norm}</b></div>
+      <div class="ch-row"><span>Когда сделки</span><b>${ch.eta}</b></div>
+      <div class="ch-row"><span>Что нужно</span><b>${ch.need}</b></div>
+      <select onchange="setStatus('${ch.key}',this.value)">
+        ${STATUSES.map(s => `<option${s === st ? ' selected' : ''}>${s}</option>`).join('')}
+      </select></div>`;
+  }
+  document.getElementById('chView').innerHTML = h + `</div>`;
+}
+function setStatus(key, val){ state.status[key] = val; saveState(); }
+
+/* ============ вкладка «Шаблоны» ============ */
+function renderTemplates(){
+  let h = `<div class="callout blue"><span class="ic">✍️</span><div>Правило для всех: первым сообщением не продаем.
+    Задача - получить ответ. Никаких «здравствуйте, меня зовут, я занимаюсь». Сразу про них и конкретно.</div></div>`;
+  TEMPLATES.forEach((t, i) => {
+    h += `<details class="tpl"><summary>${t.t}</summary><div class="tpl-body">`;
+    t.parts.forEach((p, j) => {
+      h += `<h5>${p.h}</h5><blockquote id="q${i}_${j}">${esc(p.q)}</blockquote>
+        <button class="ghost copybtn" onclick="copyQ('q${i}_${j}',this)">Скопировать</button>`;
+      if(p.why) h += `<div class="why">${p.why}</div>`;
+    });
+    h += `</div></details>`;
+  });
+  document.getElementById('tplView').innerHTML = h;
+}
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function copyQ(id, btn){
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => {
+    btn.textContent = 'Скопировано';
+    setTimeout(() => { btn.textContent = 'Скопировать'; }, 1400);
+  });
+}
+
+/* ============ вкладка «Задачи» ============ */
+function renderTasks(){
+  const done = TASKS.filter((_, i) => state.tasks[i]).length;
+  let h = `<div class="callout blue"><span class="ic">✅</span><div>Ближайшие действия из конспекта.
+    Закрыто <b>${done}</b> из ${TASKS.length}.</div></div>`;
+  TASKS.forEach((t, i) => {
+    const d = !!state.tasks[i];
+    h += `<div class="task${d ? ' done' : ''}" onclick="toggleTask(${i})">
+      <div class="tbox">✓</div><div class="ttext">${t}</div></div>`;
+  });
+  h += `<h2 class="sec">Что автоматизировать и делегировать</h2>
+    <div class="callout yellow"><span class="ic">⏳</span><div>Заполняем после трех недель работы руками.
+      Раньше не автоматизируем: нельзя автоматизировать то, что еще не работает.</div></div>
+    <div class="tbl-wrap"><div class="tbl-scroll"><table><thead><tr>
+      <th>Шаг</th><th style="text-align:left">Кому отдать</th><th style="text-align:left">Что нужно, чтобы отдать</th>
+      </tr></thead><tbody>
+      <tr><td>Поиск карточек по критериям</td><td style="text-align:left">Ассистент или парсер</td><td style="text-align:left">Четкий чек-лист отбора</td></tr>
+      <tr><td>Сбор контактов бизнеса</td><td style="text-align:left">Ассистент</td><td style="text-align:left">Таблица с полями</td></tr>
+      <tr><td>Первое касание</td><td style="text-align:left">Ассистент по шаблону</td><td style="text-align:left">Шаблоны плюс разбор возражений</td></tr>
+      <tr><td>Мини-аудит карточки</td><td style="text-align:left">Скилл яндекс-карты</td><td style="text-align:left">Уже есть</td></tr>
+      <tr><td>Созвон и продажа</td><td style="text-align:left">Остается на мне</td><td style="text-align:left">Не делегировать до 300к в месяц</td></tr>
+      </tbody></table></div></div>`;
+  document.getElementById('taskView').innerHTML = h;
+}
+function toggleTask(i){ state.tasks[i] = !state.tasks[i]; saveState(); renderTasks(); }
+
+/* ============ вкладки и тема ============ */
+const VIEWS = {week:'weekView', summary:'sumView', channels:'chView', tpl:'tplView', tasks:'taskView'};
+function setView(v){
+  for(const k in VIEWS) document.getElementById(VIEWS[k]).style.display = k === v ? '' : 'none';
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === v));
+  if(v === 'week') renderWeek();
+  if(v === 'summary') renderSummary();
+  if(v === 'channels') renderChannels();
+  if(v === 'tpl') renderTemplates();
+  if(v === 'tasks') renderTasks();
+}
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'light' ? 'dark' : cur === 'dark' ? '' : 'light';
+  if(next){ document.documentElement.setAttribute('data-theme', next); localStorage.setItem(THEME_KEY, next); }
+  else { document.documentElement.removeAttribute('data-theme'); localStorage.removeItem(THEME_KEY); }
+}
+(function initTheme(){ const t = localStorage.getItem(THEME_KEY); if(t) document.documentElement.setAttribute('data-theme', t); })();
+
+function doExport(){
+  const blob = new Blob([JSON.stringify({entries, state, exported:new Date().toISOString()}, null, 2)],
+    {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'трекер-каналов-' + iso(new Date()) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ============ вход ============ */
+async function sendLink(){
+  const email = document.getElementById('email').value.trim();
+  const msg = document.getElementById('loginMsg');
+  if(!email){ msg.innerHTML = '<span style="color:var(--down)">Введи почту</span>'; return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'Отправляю...';
+  const {error} = await sb.auth.signInWithOtp({email, options:{emailRedirectTo:location.href.split('#')[0]}});
+  btn.disabled = false; btn.textContent = 'Прислать ссылку';
+  msg.innerHTML = error
+    ? '<span style="color:var(--down)">' + error.message + '</span>'
+    : '<span style="color:var(--up)">Ссылка ушла на ' + email + '. Открой письмо на этом же устройстве.</span>';
+}
+async function signOut(){ await sb.auth.signOut(); location.reload(); }
+
+/* ============ старт ============ */
+async function boot(){
+  const cfg = window.TRACKER_CONFIG || {};
+  const bootEl = document.getElementById('boot');
+  if(!cfg.SUPABASE_URL || cfg.SUPABASE_URL.startsWith('ВСТАВЬ')){
+    bootEl.innerHTML = 'Не заполнен <b>config.js</b>: нужны SUPABASE_URL и SUPABASE_ANON_KEY.';
+    return;
+  }
+  sb = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+  const {data:{session}} = await sb.auth.getSession();
+  if(!session){
+    bootEl.style.display = 'none';
+    document.getElementById('loginBox').style.display = '';
+    return;
+  }
+  user = session.user;
+  try { await loadAll(); }
+  catch(e){
+    bootEl.innerHTML = 'Не удалось загрузить данные: ' + e.message +
+      '<br><span class="hint">Проверь, что schema.sql выполнен в Supabase.</span>';
+    return;
+  }
+  document.getElementById('whoBtn').textContent = user.email + ' · выйти';
+  bootEl.style.display = 'none';
+  document.getElementById('app').style.display = '';
+  setView('week');
+}
+sb = null;
+boot();
+</script>
+</body>
+</html>
