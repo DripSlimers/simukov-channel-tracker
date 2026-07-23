@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kirill Simukov · трекер каналов</title>
+<title>Kirill Simukov · трекер</title>
 <style>
 :root{
   --bg:#f4f5f7; --panel:#ffffff; --panel2:#fafbfc; --line:#e4e7ec; --line2:#eef0f3;
@@ -69,7 +69,8 @@ th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;
 th:first-child,td:first-child{text-align:left}
 tbody tr:last-child td{border-bottom:none}
 tfoot td{border-top:1px solid var(--line);border-bottom:none;font-weight:700;background:var(--panel2)}
-input[type=text],input[type=email],input[type=number],select,textarea{font-family:inherit;font-size:13px;color:var(--text);
+input[type=text],input[type=email],input[type=number],input[type=date],input[type=url],select,textarea{
+  font-family:inherit;font-size:13px;color:var(--text);
   background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
 input[type=number]{-moz-appearance:textfield;text-align:right}
 input.cellin{border:1px solid transparent;background:transparent;padding:5px 7px;border-radius:7px;
@@ -80,6 +81,7 @@ input.cellin:focus{border-color:var(--accent);background:var(--panel);outline:no
 .saved.show{opacity:1}
 .saved.err{color:var(--down);opacity:1}
 .hint{font-size:12px;color:var(--muted)}
+.navbtn{padding:4px 11px}
 /* неделя */
 .wknav{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);
   border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);margin-bottom:16px;flex-wrap:wrap}
@@ -147,9 +149,126 @@ blockquote{margin:0;padding:11px 14px;border-left:3px solid var(--accent);backgr
 .login h1{font-size:20px;margin:0 0 6px}
 .login p{color:var(--muted);font-size:13.5px;margin:0 0 18px}
 .login input{margin-bottom:11px;text-align:center}
+/* ===== соцсети: карточки аккаунтов ===== */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--panel);padding:6px 11px;border-radius:20px;cursor:pointer;
+  font-size:12.5px;display:flex;align-items:center;gap:6px;user-select:none}
+.chip.active{border-color:var(--accent);background:var(--accent-soft)}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+.chip .n{font-weight:700}
+.card.acc{cursor:pointer;transition:.12s}
+.card.acc:hover{border-color:var(--accent);transform:translateY(-1px)}
+.card .chead{display:flex;align-items:center;gap:8px}
+.card .emoji{font-size:18px}
+.card .handle{color:var(--muted);font-size:12.5px;margin-top:1px}
+.card .big{display:flex;align-items:baseline;gap:10px;margin:12px 0 2px}
+.card .big .v{font-size:30px;font-weight:800;letter-spacing:-.5px}
+.card .sub{display:flex;gap:18px;margin:8px 0 4px;color:var(--muted);font-size:12.5px;flex-wrap:wrap}
+.card .sub b{color:var(--text);font-weight:700}
+.delta{font-size:13px;font-weight:700}
+.delta.up{color:var(--up)} .delta.down{color:var(--down)} .delta.flat{color:var(--muted)}
+.spark{width:100%;height:44px;margin-top:8px;display:block}
+.sparkempty{color:var(--muted);font-size:12px;margin-top:12px}
+.pill{display:inline-flex;align-items:center;gap:6px}
+.pill .dot{width:9px;height:9px;border-radius:50%}
+/* ===== модалка ===== */
+.overlay{position:fixed;inset:0;background:rgba(10,12,16,.5);z-index:40;display:none;
+  align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
+.overlay.open{display:flex}
+.modal{background:var(--panel);border-radius:16px;width:100%;max-width:720px;box-shadow:0 20px 60px rgba(0,0,0,.3);
+  border:1px solid var(--line)}
+.modal .top{display:flex;align-items:flex-start;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;background:var(--panel);border-radius:16px 16px 0 0;z-index:2}
+.modal .top .emoji{font-size:22px}
+.modal .top h2{margin:0;font-size:18px}
+.modal .top .handle{color:var(--muted);font-size:13px}
+.modal .top .handle a{color:var(--accent);text-decoration:none}
+.modal .body{padding:18px 20px}
+.close{margin-left:auto;font-size:20px;line-height:1;background:none;border:none;color:var(--muted);cursor:pointer;padding:4px 8px}
+.msec{margin-bottom:22px}
+.msec h4{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.formgrid label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted)}
+.addbtnrow{display:flex;justify-content:flex-end;margin-top:10px}
+.htable td,.htable th{padding:9px 10px;font-size:13px}
+.htable .dcell{font-weight:700}
+.htable .up{color:var(--up)} .htable .down{color:var(--down)}
+.htable .del{color:var(--muted);cursor:pointer;border:none;background:none;font-size:16px;padding:0 4px}
+.htable .del:hover{color:var(--down)}
+.meta-edit{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.meta-edit label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted)}
+.danger{color:var(--down);border-color:var(--line)}
+.danger:hover{border-color:var(--down);color:var(--down)}
+/* ===== постинг ===== */
+.today-block{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  padding:16px 18px;margin-bottom:18px}
+.today-head{display:flex;align-items:baseline;gap:10px;margin-bottom:4px;flex-wrap:wrap}
+.today-head h3{margin:0;font-size:16px}
+.today-head .date{color:var(--muted);font-size:13px}
+.today-head .prog{margin-left:auto;font-weight:800;font-size:15px}
+.today-head .prog.full{color:var(--up)}
+.today-sub{color:var(--muted);font-size:12.5px;margin-bottom:14px}
+.pf-list{display:grid;gap:8px}
+.pf-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
+  border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel2);transition:.12s}
+.pf-row.on{background:color-mix(in srgb,var(--up) 12%,var(--panel));border-color:color-mix(in srgb,var(--up) 40%,var(--line))}
+.pf-check{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line);background:var(--panel);
+  display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;flex-shrink:0;transition:.12s;color:var(--muted)}
+.pf-check:hover{border-color:var(--accent)}
+.pf-check.on{background:var(--up);border-color:var(--up);color:#fff}
+.pf-main{min-width:0}
+.pf-name{font-weight:700;display:flex;align-items:center;gap:7px}
+.pf-name .pemoji{font-size:15px}
+.pf-note-in{margin-top:5px;font-size:12.5px;padding:5px 8px}
+.pf-open{padding:5px 10px;font-size:12px}
+.pf-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.pf-stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);
+  position:relative;overflow:hidden}
+.pf-stat .pstripe{position:absolute;left:0;top:0;bottom:0;width:4px}
+.pf-stat .ph{display:flex;align-items:center;gap:7px;font-weight:700;font-size:13.5px;margin-bottom:8px;padding-left:6px}
+.pf-stat .streak{font-size:26px;font-weight:800;letter-spacing:-.5px;padding-left:6px}
+.pf-stat .streak small{font-size:13px;font-weight:600;color:var(--muted)}
+.pf-stat .mrow{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:8px;padding-left:6px}
+.pf-stat .mrow b{color:var(--text)}
+.mx-wrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.mx-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.mx-head b{font-size:15px;text-transform:capitalize}
+.mx-scroll{overflow-x:auto}
+table.mx{border:none;border-radius:0;box-shadow:none;min-width:520px}
+table.mx th,table.mx td{text-align:center;padding:9px 6px;border-bottom:1px solid var(--line2)}
+table.mx th:first-child,table.mx td:first-child{text-align:left;padding-left:16px;white-space:nowrap}
+table.mx th.pcol{font-size:16px;letter-spacing:0}
+table.mx td:last-child,table.mx th:last-child{padding-right:14px}
+.mx tbody tr.is-today{background:var(--accent-soft)}
+.mx tbody tr.is-future td{opacity:.4}
+.mx .dcol{font-weight:600}
+.mx .dcol .dow{color:var(--muted);font-weight:500;font-size:12px;margin-left:5px}
+.mx .full-badge{color:var(--up);font-weight:800;margin-left:6px}
+.cell{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);
+  display:inline-flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;color:var(--muted);
+  transition:.1s;position:relative}
+.cell:hover{border-color:var(--accent)}
+.cell.on{background:var(--up);border-color:var(--up);color:#fff;font-weight:700}
+.cell.miss{border-style:dashed;border-color:color-mix(in srgb,var(--down) 45%,var(--line))}
+.cell.future{cursor:default;opacity:.5;border-style:dashed}
+.cell.future:hover{border-color:var(--line)}
+.cell.hasnote::after{content:'';position:absolute;top:3px;right:3px;width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.9}
+.mx-legend{display:flex;gap:16px;padding:12px 16px;font-size:12px;color:var(--muted);flex-wrap:wrap;border-top:1px solid var(--line2)}
+.mx-legend i{width:13px;height:13px;border-radius:4px;display:inline-block;vertical-align:-2px;margin-right:5px;border:1px solid var(--line)}
+.mx-legend i.g{background:var(--up);border-color:var(--up)}
+.mx-legend i.m{background:var(--panel2);border-style:dashed;border-color:color-mix(in srgb,var(--down) 45%,var(--line))}
+.day-pf{border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:10px;background:var(--panel2)}
+.day-pf.on{background:color-mix(in srgb,var(--up) 10%,var(--panel));border-color:color-mix(in srgb,var(--up) 35%,var(--line))}
+.day-pf .dh{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.day-pf .dh .pemoji{font-size:16px}
+.day-pf .dh .nm{font-weight:700}
+.day-pf .dh .tog{margin-left:auto}
+.day-pf .fields{display:grid;gap:8px}
+.day-pf.off .fields{display:none}
 @media(max-width:640px){
   .wrap{padding:14px 12px 50px} header{padding:10px 12px}
   .brand{font-size:14px;width:100%}
+  .meta-edit{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -157,23 +276,29 @@ blockquote{margin:0;padding:11px 14px;border-left:3px solid var(--accent);backgr
 
 <div id="app" style="display:none">
 <header>
-  <div class="brand">Kirill Simukov<span> · </span>трекер каналов</div>
+  <div class="brand">Kirill Simukov<span> · </span>трекер</div>
   <span class="saved" id="saved"></span>
   <div class="spacer"></div>
   <button class="ghost" onclick="toggleTheme()" title="Светлая / темная тема">🌗</button>
   <button class="ghost" onclick="doExport()">Экспорт JSON</button>
+  <button class="ghost" onclick="document.getElementById('imp').click()" title="Перенос данных из старого трекера соцсетей или из бэкапа">Импорт</button>
+  <input type="file" id="imp" accept="application/json" style="display:none" onchange="doImport(event)">
   <button class="ghost" id="whoBtn" onclick="signOut()" title="Выйти"></button>
 </header>
 
 <div class="wrap">
   <div class="tabs">
-    <div class="tab active" data-view="week"    onclick="setView('week')">Неделя</div>
+    <div class="tab active" data-view="posting" onclick="setView('posting')">Постинг</div>
+    <div class="tab"        data-view="social"  onclick="setView('social')">Соцсети</div>
+    <div class="tab"        data-view="week"    onclick="setView('week')">Неделя</div>
     <div class="tab"        data-view="summary" onclick="setView('summary')">Сводка</div>
     <div class="tab"        data-view="channels"onclick="setView('channels')">Каналы</div>
     <div class="tab"        data-view="tpl"     onclick="setView('tpl')">Шаблоны</div>
     <div class="tab"        data-view="tasks"   onclick="setView('tasks')">Задачи</div>
   </div>
-  <div id="weekView"></div>
+  <div id="postView"></div>
+  <div id="socialView" style="display:none"></div>
+  <div id="weekView" style="display:none"></div>
   <div id="sumView" style="display:none"></div>
   <div id="chView" style="display:none"></div>
   <div id="tplView" style="display:none"></div>
@@ -181,8 +306,12 @@ blockquote{margin:0;padding:11px 14px;border-left:3px solid var(--accent);backgr
 </div>
 </div>
 
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeAnyModal()">
+  <div class="modal" id="modal"></div>
+</div>
+
 <div id="loginBox" class="login" style="display:none">
-  <h1>Трекер каналов</h1>
+  <h1>Трекер</h1>
   <p>Вход по одноразовой ссылке на почту</p>
   <input type="email" id="email" placeholder="почта" autocomplete="email">
   <button class="primary" style="width:100%" onclick="sendLink()" id="loginBtn">Прислать ссылку</button>
@@ -287,11 +416,32 @@ const TEMPLATES = [
   ]},
 ];
 
+/* ============ справочник соцсетей ============ */
+const PLATFORMS = {
+  telegram:  {label:'Telegram',        emoji:'✈️', color:'#2aabee'},
+  youtube:   {label:'YouTube Shorts',  emoji:'▶️', color:'#f0324b'},
+  instagram: {label:'Instagram',       emoji:'📸', color:'#e1306c'},
+  tiktok:    {label:'TikTok',          emoji:'🎵', color:'#ff2d55'},
+};
+const PF_ORDER = ['telegram','youtube','instagram','tiktok'];
+const SEED = [
+  {id:'tg', platform:'telegram',  name:'Личный канал',   handle:'@simukovich', url:'https://t.me/simukovich'},
+  {id:'yt', platform:'youtube',   name:'YouTube Shorts', handle:'',            url:''},
+  {id:'ig', platform:'instagram', name:'Instagram',      handle:'designbrosk', url:'https://instagram.com/designbrosk'},
+  {id:'tt', platform:'tiktok',    name:'TikTok',         handle:'@simukovich', url:'https://www.tiktok.com/@simukovich'},
+];
+const RU_MONTHS=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+const RU_DOW=['вс','пн','вт','ср','чт','пт','сб'];
+
 /* ============ состояние ============ */
 let sb = null, user = null;
 let entries = {};              // "week|channel" -> {touches,...}
 let state = {status:{}, tasks:{}};
 let curWeek = mondayOf(new Date());
+let DATA = [];                 // аккаунты соцсетей [{id,platform,name,handle,url,sort,history:[...]}]
+let POSTING = {};              // {'YYYY-MM-DD': {telegram:{ts,note,url}, ...}}
+let filter = null, openId = null, dayOpen = null;
+let calY = null, calM = null;
 const THEME_KEY = 'ch_tracker_theme';
 
 /* ============ даты ============ */
@@ -305,6 +455,8 @@ function iso(d){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 function parseISO(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+const ymd = iso, parseD = parseISO;
+function today(){ return iso(new Date()); }
 function shiftWeek(ws, n){ const d = parseISO(ws); d.setDate(d.getDate() + n*7); return iso(d); }
 function weekLabel(ws){
   const a = parseISO(ws), b = parseISO(ws); b.setDate(b.getDate()+6);
@@ -321,7 +473,7 @@ function weekNo(ws){
   return diff >= 0 ? diff + 1 : null;
 }
 
-/* ============ данные ============ */
+/* ============ данные недель ============ */
 function ek(w, c){ return w + '|' + c; }
 function getEntry(w, c){
   return entries[ek(w,c)] || {touches:0,replies:0,dialogs:0,calls:0,deals:0,revenue:0,hours:0};
@@ -343,10 +495,13 @@ function convClass(v, c){
   return 'mid';
 }
 function fmt(n, dec){
-  if(n === null || n === undefined) return '-';
+  if(n === null || n === undefined || n === '') return '-';
   return Number(n).toLocaleString('ru-RU', {maximumFractionDigits: dec === undefined ? 0 : dec});
 }
 function fmtPct(v){ return v === null ? '-' : fmt(v, 1) + '%'; }
+function esc(t){ return (t == null ? '' : String(t)).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+function hexRgba(hex,a){ const n = parseInt(hex.slice(1),16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; }
+function plural(n){ return n%10===1&&n%100!==11?'день':(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?'дня':'дней'); }
 
 /* ============ сохранение ============ */
 let saveTimers = {};
@@ -375,18 +530,483 @@ async function saveState(){
     if(error) flash('не сохранилось: ' + error.message, true); else flash('сохранено');
   }, 500);
 }
+/* постинг: upsert или delete одной отметки */
+function savePostMark(day, plat){
+  const key = 'pm|' + day + '|' + plat;
+  clearTimeout(saveTimers[key]);
+  saveTimers[key] = setTimeout(async () => {
+    const rec = POSTING[day] && POSTING[day][plat];
+    let error;
+    if(rec){
+      ({error} = await sb.from('posting_marks').upsert(
+        {user_id:user.id, day, platform:plat, note:rec.note||'', url:rec.url||''},
+        {onConflict:'user_id,day,platform'}));
+    } else {
+      ({error} = await sb.from('posting_marks').delete().match({user_id:user.id, day, platform:plat}));
+    }
+    if(error) flash('не сохранилось: ' + error.message, true); else flash('сохранено');
+  }, 400);
+}
+/* соцсети: аккаунты и срезы */
+function saveAccountMeta(id){
+  const key = 'acc|' + id;
+  clearTimeout(saveTimers[key]);
+  saveTimers[key] = setTimeout(async () => {
+    const a = DATA.find(x => x.id === id); if(!a) return;
+    const {error} = await sb.from('social_accounts').upsert(
+      {user_id:user.id, id:a.id, platform:a.platform, name:a.name||'', handle:a.handle||'', url:a.url||'', sort:a.sort||0},
+      {onConflict:'user_id,id'});
+    if(error) flash('не сохранилось: ' + error.message, true); else flash('сохранено');
+  }, 400);
+}
+async function saveSnap(accId, snap){
+  const row = {user_id:user.id, account_id:accId, date:snap.date,
+    followers:snap.followers, views:snap.views, likes:snap.likes, posts:snap.posts, note:snap.note||''};
+  const {error} = await sb.from('social_snapshots').upsert(row, {onConflict:'user_id,account_id,date'});
+  if(error) flash('не сохранилось: ' + error.message, true); else flash('сохранено');
+}
+
 async function loadAll(){
-  const [we, as] = await Promise.all([
+  const [we, as, pm, sa, ss] = await Promise.all([
     sb.from('week_entries').select('*'),
     sb.from('app_state').select('data').maybeSingle(),
+    sb.from('posting_marks').select('*'),
+    sb.from('social_accounts').select('*').order('sort'),
+    sb.from('social_snapshots').select('*'),
   ]);
   if(we.error) throw we.error;
+  if(pm.error) throw pm.error;
+  if(sa.error) throw sa.error;
   entries = {};
   for(const r of we.data || []){
     entries[ek(r.week_start, r.channel)] = {touches:r.touches, replies:r.replies, dialogs:r.dialogs,
       calls:r.calls, deals:r.deals, revenue:Number(r.revenue), hours:Number(r.hours)};
   }
   if(as.data && as.data.data) state = Object.assign({status:{}, tasks:{}}, as.data.data);
+  POSTING = {};
+  for(const r of pm.data || []){
+    if(!POSTING[r.day]) POSTING[r.day] = {};
+    POSTING[r.day][r.platform] = {ts:Date.parse(r.ts)||Date.now(), note:r.note||'', url:r.url||''};
+  }
+  const snapsByAcc = {};
+  for(const r of ss.data || []){
+    (snapsByAcc[r.account_id] = snapsByAcc[r.account_id] || []).push(
+      {date:r.date, followers:r.followers, views:r.views, likes:r.likes, posts:r.posts, note:r.note||''});
+  }
+  DATA = (sa.data || []).map(r => ({id:r.id, platform:r.platform, name:r.name, handle:r.handle, url:r.url,
+    sort:r.sort, history:(snapsByAcc[r.id]||[]).sort((x,y)=>x.date.localeCompare(y.date))}));
+  /* первый вход: завести площадки из SEED */
+  if(!DATA.length){
+    DATA = SEED.map((s,i) => ({...s, sort:i, history:[]}));
+    await sb.from('social_accounts').upsert(DATA.map(a =>
+      ({user_id:user.id, id:a.id, platform:a.platform, name:a.name, handle:a.handle, url:a.url, sort:a.sort})),
+      {onConflict:'user_id,id'});
+  }
+}
+
+/* ============ вкладка «Постинг» ============ */
+function dayObj(ds){ return POSTING[ds] || {}; }
+function isPosted(ds, plat){ const d = POSTING[ds]; return !!(d && d[plat]); }
+function isFullDay(ds){ return PF_ORDER.every(p => isPosted(ds, p)); }
+function markedDates(){ return Object.keys(POSTING).filter(ds => Object.keys(POSTING[ds]||{}).length).sort(); }
+
+function setPost(ds, plat, on, extra){
+  if(on){
+    if(!POSTING[ds]) POSTING[ds] = {};
+    const prev = POSTING[ds][plat] || {};
+    POSTING[ds][plat] = {ts:prev.ts||Date.now(),
+      note:(extra && 'note' in extra) ? extra.note : (prev.note||''),
+      url:(extra && 'url' in extra) ? extra.url : (prev.url||'')};
+  } else {
+    if(POSTING[ds]) delete POSTING[ds][plat];
+    if(POSTING[ds] && !Object.keys(POSTING[ds]).length) delete POSTING[ds];
+  }
+}
+function toggleCell(ds, plat){
+  if(ds > today()) return;
+  setPost(ds, plat, !isPosted(ds, plat));
+  savePostMark(ds, plat);
+  renderPosting();
+}
+function toggleTodayPf(plat){
+  const t = today();
+  const note = (document.getElementById('tnote_'+plat)||{}).value;
+  if(isPosted(t, plat)) setPost(t, plat, false);
+  else setPost(t, plat, true, note != null ? {note:note.trim()} : undefined);
+  savePostMark(t, plat);
+  renderPosting();
+}
+function setTodayNote(plat, val){
+  const t = today();
+  setPost(t, plat, true, {note:val.trim()});
+  savePostMark(t, plat);
+}
+/* серия подряд по площадке: сколько дней кряду (до сегодня включительно) есть пост */
+function platformStreak(plat){
+  let s = 0; const d = new Date();
+  if(!isPosted(today(), plat)) d.setDate(d.getDate()-1);
+  while(isPosted(iso(d), plat)){ s++; d.setDate(d.getDate()-1); }
+  return s;
+}
+/* серия «полных» дней (все площадки закрыты) */
+function fullStreak(){
+  let s = 0; const d = new Date();
+  if(!isFullDay(today())) d.setDate(d.getDate()-1);
+  while(isFullDay(iso(d))){ s++; d.setDate(d.getDate()-1); }
+  return s;
+}
+function monthCount(plat, y, m){
+  let c = 0; const dim = new Date(y, m+1, 0).getDate();
+  for(let dn = 1; dn <= dim; dn++){ if(isPosted(iso(new Date(y,m,dn)), plat)) c++; }
+  return c;
+}
+function monthFullCount(y, m){
+  let c = 0; const dim = new Date(y, m+1, 0).getDate(); const t = today();
+  for(let dn = 1; dn <= dim; dn++){ const ds = iso(new Date(y,m,dn)); if(ds <= t && isFullDay(ds)) c++; }
+  return c;
+}
+function daysElapsedInMonth(y, m){
+  const t = new Date();
+  if(y < t.getFullYear() || (y === t.getFullYear() && m < t.getMonth())) return new Date(y, m+1, 0).getDate();
+  if(y === t.getFullYear() && m === t.getMonth()) return t.getDate();
+  return 0;
+}
+function calNav(delta){
+  if(calY == null){ const d = new Date(); calY = d.getFullYear(); calM = d.getMonth(); }
+  calM += delta;
+  if(calM < 0){ calM = 11; calY--; }
+  if(calM > 11){ calM = 0; calY++; }
+  renderPosting();
+}
+
+function renderPosting(){
+  const box = document.getElementById('postView');
+  if(calY == null){ const d = new Date(); calY = d.getFullYear(); calM = d.getMonth(); }
+  const t = today();
+  const td = new Date();
+
+  // ---- Сегодня ----
+  const doneCount = PF_ORDER.filter(p => isPosted(t, p)).length;
+  const todayRows = PF_ORDER.map(plat => {
+    const p = PLATFORMS[plat]; const on = isPosted(t, plat);
+    const note = on ? (dayObj(t)[plat].note||'') : '';
+    return `<div class="pf-row ${on?'on':''}">
+      <button class="pf-check ${on?'on':''}" onclick="toggleTodayPf('${plat}')" aria-label="Отметить ${p.label}" title="${on?'Снять отметку':'Отметить пост'}">${on?'✓':''}</button>
+      <div class="pf-main">
+        <div class="pf-name"><span class="pemoji">${p.emoji}</span>${p.label}</div>
+        ${on?`<input class="pf-note-in" type="text" value="${esc(note)}" placeholder="о чем пост (необязательно)" onchange="setTodayNote('${plat}',this.value)">`:''}
+      </div>
+      <button class="pf-open" onclick="openDay('${t}')" title="Ссылка и детали">детали</button>
+    </div>`;
+  }).join('');
+  const prog = `<span class="prog ${doneCount===PF_ORDER.length?'full':''}">${doneCount}/${PF_ORDER.length}</span>`;
+  const todayBlock = `<div class="today-block">
+    <div class="today-head"><h3>Сегодня</h3><span class="date">${t} · ${RU_DOW[td.getDay()]}</span>${prog}</div>
+    <div class="today-sub">${doneCount===PF_ORDER.length?'🔥 Все площадки закрыты. Красавчик.':'Цель дня - пост в каждую площадку. Жми галочку, как выложил.'}</div>
+    <div class="pf-list">${todayRows}</div>
+  </div>`;
+
+  // ---- Статы по площадкам ----
+  const elapsed = daysElapsedInMonth(calY, calM);
+  const fs = fullStreak();
+  let statCards = PF_ORDER.map(plat => {
+    const p = PLATFORMS[plat]; const st = platformStreak(plat); const mc = monthCount(plat, calY, calM);
+    return `<div class="pf-stat">
+      <div class="pstripe" style="background:${p.color}"></div>
+      <div class="ph"><span>${p.emoji}</span>${p.label}</div>
+      <div class="streak" style="${st>0?'color:var(--up)':''}">${st} <small>${plural(st)} 🔥</small></div>
+      <div class="mrow"><span>в этом месяце</span><b>${mc}${elapsed?' / '+elapsed:''}</b></div>
+    </div>`;
+  }).join('');
+  const fullCard = `<div class="pf-stat">
+      <div class="pstripe" style="background:var(--accent)"></div>
+      <div class="ph"><span>🎯</span>Полных дней подряд</div>
+      <div class="streak" style="${fs>0?'color:var(--up)':''}">${fs} <small>${plural(fs)}</small></div>
+      <div class="mrow"><span>все 4 площадки закрыты</span><b>${elapsed?monthFullCount(calY,calM)+' / '+elapsed:monthFullCount(calY,calM)}</b></div>
+    </div>`;
+  const stats = `<div class="pf-stats">${statCards}${fullCard}</div>`;
+
+  // ---- Матрица месяца ----
+  const dim = new Date(calY, calM+1, 0).getDate();
+  let rowsHtml = '';
+  for(let dn = dim; dn >= 1; dn--){ // новые сверху
+    const ds = iso(new Date(calY, calM, dn));
+    const dowIdx = new Date(calY, calM, dn).getDay();
+    const future = ds > t, isT = ds === t, full = isFullDay(ds);
+    let cells = PF_ORDER.map(plat => {
+      const on = isPosted(ds, plat);
+      const rec = on ? dayObj(ds)[plat] : null;
+      const hasNote = on && ((rec.note && rec.note.length) || (rec.url && rec.url.length));
+      let cls = 'cell';
+      if(on) cls += ' on' + (hasNote ? ' hasnote' : '');
+      else if(future) cls += ' future';
+      else cls += ' miss';
+      const tip = on ? (rec.note||'') + (rec.url ? ' · ' + rec.url : '') || 'Пост есть' : (future ? '' : 'Не выложено');
+      return `<td><span class="${cls}" title="${esc(tip)}" onclick="${future?'':`toggleCell('${ds}','${plat}')`}" role="button">${on?'✓':(future?'':'')}</span></td>`;
+    }).join('');
+    rowsHtml += `<tr class="${isT?'is-today':''} ${future?'is-future':''}">
+      <td class="dcol"><a style="cursor:pointer;color:inherit;text-decoration:none" onclick="${future?'':`openDay('${ds}')`}">${dn}<span class="dow">${RU_DOW[dowIdx]}</span>${full?'<span class="full-badge" title="все площадки закрыты">✓</span>':''}</a></td>
+      ${cells}
+    </tr>`;
+  }
+  const matrix = `<div class="mx-wrap">
+    <div class="mx-head">
+      <button class="navbtn" onclick="calNav(-1)" aria-label="Предыдущий месяц">‹</button>
+      <b>${RU_MONTHS[calM]} ${calY}</b>
+      <button class="navbtn" onclick="calNav(1)" aria-label="Следующий месяц">›</button>
+    </div>
+    <div class="mx-scroll"><table class="mx"><thead><tr>
+      <th>День</th>
+      ${PF_ORDER.map(p => `<th class="pcol" title="${PLATFORMS[p].label}">${PLATFORMS[p].emoji}</th>`).join('')}
+    </tr></thead><tbody>${rowsHtml}</tbody></table></div>
+    <div class="mx-legend">
+      <span><i class="g"></i>выложено (клик по галочке = снять)</span>
+      <span><i class="m"></i>пропуск</span>
+      <span>клик по числу - ссылки и заметки на весь день</span>
+    </div>
+  </div>`;
+
+  box.innerHTML = todayBlock + stats + matrix;
+}
+
+/* модалка одного дня: все площадки с заметкой и ссылкой */
+function openDay(ds){
+  if(ds > today()) return;
+  dayOpen = ds; openId = null;
+  const d = parseISO(ds);
+  const rows = PF_ORDER.map(plat => {
+    const p = PLATFORMS[plat]; const on = isPosted(ds, plat); const rec = on ? dayObj(ds)[plat] : {note:'',url:''};
+    return `<div class="day-pf ${on?'on':'off'}" id="daypf_${plat}">
+      <div class="dh"><span class="pemoji">${p.emoji}</span><span class="nm">${p.label}</span>
+        <button class="tog ${on?'primary':''}" onclick="dayToggle('${plat}')">${on?'✓ выложено':'отметить'}</button>
+      </div>
+      <div class="fields">
+        <input type="text" id="dnote_${plat}" value="${esc(rec.note||'')}" placeholder="о чем пост / название">
+        <input type="url" id="durl_${plat}" value="${esc(rec.url||'')}" placeholder="ссылка на публикацию (необязательно)">
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('modal').innerHTML = `
+    <div class="top">
+      <span class="emoji">🗓️</span>
+      <div><h2>${ds}</h2><div class="handle">${RU_DOW[d.getDay()]}, ${d.getDate()} ${RU_MONTHS[d.getMonth()]}</div></div>
+      <button class="close" onclick="closeDay()" aria-label="Закрыть">×</button>
+    </div>
+    <div class="body">
+      <div class="hint" style="margin-bottom:14px">Отметь площадки, куда выложил в этот день. Заметка и ссылка - чтобы потом найти публикацию.</div>
+      ${rows}
+      <div class="addbtnrow"><button class="primary" onclick="saveDay()">Сохранить</button></div>
+    </div>`;
+  document.getElementById('overlay').classList.add('open');
+}
+function dayToggle(plat){
+  const el = document.getElementById('daypf_'+plat); const on = el.classList.contains('on');
+  el.classList.toggle('on', !on); el.classList.toggle('off', on);
+  const btn = el.querySelector('.tog'); btn.textContent = on ? 'отметить' : '✓ выложено'; btn.classList.toggle('primary', !on);
+}
+function saveDay(){
+  if(!dayOpen) return; const ds = dayOpen;
+  PF_ORDER.forEach(plat => {
+    const el = document.getElementById('daypf_'+plat); const on = el.classList.contains('on');
+    if(on) setPost(ds, plat, true, {note:document.getElementById('dnote_'+plat).value.trim(), url:document.getElementById('durl_'+plat).value.trim()});
+    else setPost(ds, plat, false);
+    savePostMark(ds, plat);
+  });
+  closeDay(); renderPosting();
+}
+function closeDay(){ document.getElementById('overlay').classList.remove('open'); dayOpen = null; }
+function closeAnyModal(){ if(dayOpen) closeDay(); else closeModal(); }
+
+/* ============ вкладка «Соцсети» ============ */
+function sortedHist(a){ return (a.history||[]).slice().sort((x,y) => (x.date||'').localeCompare(y.date||'')); }
+function latestPrev(a){ const h = sortedHist(a); return [h[h.length-1]||null, h[h.length-2]||null, h]; }
+function deltaFollowers(last, prev){
+  if(!last || !prev || last.followers == null || prev.followers == null) return null;
+  return last.followers - prev.followers;
+}
+function deltaHtml(d){
+  if(d == null) return '';
+  const k = d > 0 ? 'up' : d < 0 ? 'down' : 'flat'; const sign = d > 0 ? '+' : '';
+  return `<span class="delta ${k}">${sign}${fmt(d)}</span>`;
+}
+function sparkline(hist, color){
+  const pts = hist.filter(h => h.followers != null).map(h => Number(h.followers));
+  if(pts.length < 2) return `<div class="sparkempty">добавь 2+ среза - появится график роста</div>`;
+  const w = 280, h = 44, pad = 5;
+  const min = Math.min(...pts), max = Math.max(...pts), rng = (max-min) || 1;
+  const step = (w - pad*2) / (pts.length - 1);
+  const xy = pts.map((v,i) => [pad + i*step, h - pad - ((v-min)/rng)*(h - pad*2)]);
+  const line = xy.map((p,i) => (i?'L':'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  const area = `M${xy[0][0].toFixed(1)} ${h-pad} ` + xy.map(p => `L${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ') + ` L${xy[xy.length-1][0].toFixed(1)} ${h-pad} Z`;
+  const end = xy[xy.length-1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+    <path d="${area}" fill="${hexRgba(color,.16)}"/>
+    <path d="${line}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${end[0].toFixed(1)}" cy="${end[1].toFixed(1)}" r="3" fill="${color}"/>
+  </svg>`;
+}
+function setFilter(f){ filter = f; renderSocial(); }
+
+function renderSocial(){
+  const box = document.getElementById('socialView');
+  // сводка сверху
+  let totFoll = 0, totDelta = 0, totViews = 0, haveFoll = false, haveViews = false;
+  for(const a of DATA){
+    const [last, prev] = latestPrev(a);
+    const foll = last ? last.followers : null, d = deltaFollowers(last, prev), views = last ? last.views : null;
+    if(foll != null){ totFoll += foll; haveFoll = true; }
+    if(d != null) totDelta += d;
+    if(views != null){ totViews += Number(views); haveViews = true; }
+  }
+  const cards = `<div class="sumcards">
+    <div class="sumcard"><div class="lbl">Всего подписчиков</div><div class="v num">${haveFoll?fmt(totFoll):'-'}</div></div>
+    <div class="sumcard"><div class="lbl">Прирост (посл. срез)</div><div class="v num" style="color:${totDelta>0?'var(--up)':totDelta<0?'var(--down)':'inherit'}">${totDelta?(totDelta>0?'+':'')+fmt(totDelta):'-'}</div></div>
+    <div class="sumcard"><div class="lbl">Суммарно просмотров</div><div class="v num">${haveViews?fmt(totViews):'-'}</div></div>
+    <div class="sumcard"><div class="lbl">Площадок</div><div class="v num">${DATA.length}</div></div>
+  </div>`;
+  // чипсы-фильтры
+  let chips = `<div class="chips">
+    <div class="chip ${filter===null?'active':''}" onclick="setFilter(null)"><span class="n">${DATA.length}</span> Все</div>`;
+  Object.entries(PLATFORMS).forEach(([k,p]) => {
+    const n = DATA.filter(d => d.platform === k).length; if(!n) return;
+    chips += `<div class="chip ${filter===k?'active':''}" onclick="setFilter('${k}')"><span class="dot" style="background:${p.color}"></span><span class="n">${n}</span> ${p.label}</div>`;
+  });
+  chips += `<div class="spacer"></div><button class="ghost" onclick="addAccount()">+ Аккаунт</button></div>`;
+  // карточки аккаунтов
+  const list = DATA.filter(d => !filter || d.platform === filter);
+  let grid;
+  if(!list.length){
+    grid = `<div class="empty">Нет площадок. Нажми «+ Аккаунт».</div>`;
+  } else {
+    grid = `<div class="grid">` + list.map(a => {
+      const p = PLATFORMS[a.platform] || {label:a.platform, emoji:'•', color:'#6b7280'};
+      const [last, prev, hist] = latestPrev(a);
+      const d = deltaFollowers(last, prev);
+      const views = last ? last.views : null, posts = last ? last.posts : null;
+      return `<div class="card acc" onclick="openDetail('${a.id}')">
+        <div class="stripe" style="background:${p.color}"></div>
+        <div class="chead"><span class="emoji">${p.emoji}</span>
+          <div><h3>${esc(a.name)||p.label}</h3><div class="handle">${p.label}${a.handle?' · '+esc(a.handle):''}</div></div>
+        </div>
+        <div class="big"><span class="v num">${fmt(last?last.followers:null)}</span>${deltaHtml(d)}</div>
+        <div class="lbl">подписчики</div>
+        <div class="sub"><span>просмотры <b class="num">${fmt(views)}</b></span><span>постов <b class="num">${fmt(posts)}</b></span>${last?`<span>срез <b>${esc(last.date)}</b></span>`:''}</div>
+        ${sparkline(hist, p.color)}
+      </div>`;
+    }).join('') + `</div>`;
+  }
+  box.innerHTML = cards + chips + grid;
+}
+
+/* модалка аккаунта: срезы метрик */
+function openDetail(id){
+  openId = id; dayOpen = null;
+  const a = DATA.find(x => x.id === id); if(!a) return;
+  const p = PLATFORMS[a.platform] || {label:a.platform, emoji:'•', color:'#6b7280'};
+  const hist = sortedHist(a);
+  const rows = hist.slice().reverse().map((snap, ri) => {
+    const idx = hist.length - 1 - ri; const prev = hist[idx-1];
+    const d = (prev && snap.followers != null && prev.followers != null) ? snap.followers - prev.followers : null;
+    return `<tr>
+      <td class="dcell num">${esc(snap.date)}</td>
+      <td class="num">${fmt(snap.followers)} ${d==null?'':`<span class="${d>0?'up':d<0?'down':''}">${d>0?'+':''}${d}</span>`}</td>
+      <td class="num">${fmt(snap.views)}</td>
+      <td class="num">${fmt(snap.likes)}</td>
+      <td class="num">${fmt(snap.posts)}</td>
+      <td>${esc(snap.note)||''}</td>
+      <td><button class="del" title="Удалить" onclick="delSnap('${a.id}','${snap.date}')">×</button></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" class="hint" style="text-align:center;padding:16px">Срезов пока нет. Внеси первый выше.</td></tr>`;
+  document.getElementById('modal').innerHTML = `
+    <div class="top">
+      <span class="emoji">${p.emoji}</span>
+      <div><h2>${esc(a.name)||p.label}</h2>
+        <div class="handle">${p.label}${a.handle?' · '+esc(a.handle):''}${a.url?` · <a href="${esc(a.url)}" target="_blank" rel="noopener">открыть</a>`:''}</div></div>
+      <button class="close" onclick="closeModal()" aria-label="Закрыть">×</button>
+    </div>
+    <div class="body">
+      <div class="msec"><h4>Новый срез</h4>
+        <div class="formgrid">
+          <label>Дата<input type="date" id="s_date" value="${today()}"></label>
+          <label>Подписчики<input type="number" id="s_foll" inputmode="numeric" placeholder="напр. 1240"></label>
+          <label>Просмотры<input type="number" id="s_views" inputmode="numeric" placeholder="за период"></label>
+          <label>Лайки<input type="number" id="s_likes" inputmode="numeric" placeholder="необяз."></label>
+          <label>Постов<input type="number" id="s_posts" inputmode="numeric" placeholder="необяз."></label>
+          <label>Заметка<input type="text" id="s_note" placeholder="что было"></label>
+        </div>
+        <div class="addbtnrow"><button class="primary" onclick="addSnap('${a.id}')">Добавить срез</button></div>
+      </div>
+      <div class="msec"><h4>История</h4>
+        <div style="overflow-x:auto"><table class="htable"><thead><tr>
+          <th>Дата</th><th>Подписчики</th><th>Просмотры</th><th>Лайки</th><th>Постов</th><th>Заметка</th><th></th>
+        </tr></thead><tbody>${rows}</tbody></table></div>
+      </div>
+      <div class="msec"><h4>Данные аккаунта</h4>
+        <div class="meta-edit">
+          <label>Название<input type="text" value="${esc(a.name)}" onchange="setMeta('${a.id}','name',this.value)"></label>
+          <label>Хэндл<input type="text" value="${esc(a.handle)}" onchange="setMeta('${a.id}','handle',this.value)"></label>
+          <label style="grid-column:1/-1">Ссылка<input type="text" value="${esc(a.url)}" onchange="setMeta('${a.id}','url',this.value)"></label>
+        </div>
+        <div class="addbtnrow"><button class="danger" onclick="delAccount('${a.id}')">Удалить аккаунт</button></div>
+      </div>
+    </div>`;
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); openId = null; renderSocial(); }
+function reopen(){ if(openId) openDetail(openId); }
+
+function numVal(id){
+  const el = document.getElementById(id); if(!el) return null;
+  const v = el.value.trim().replace(/[\s ]/g,''); if(v === '') return null;
+  const n = Number(v); return isNaN(n) ? null : n;
+}
+function addSnap(id){
+  const a = DATA.find(x => x.id === id); if(!a) return;
+  const date = document.getElementById('s_date').value || today();
+  const snap = {date,
+    followers:numVal('s_foll'), views:numVal('s_views'), likes:numVal('s_likes'), posts:numVal('s_posts'),
+    note:document.getElementById('s_note').value.trim()};
+  if(snap.followers == null && snap.views == null && snap.likes == null && snap.posts == null && !snap.note){
+    alert('Впиши хотя бы одну цифру'); return;
+  }
+  a.history = a.history || [];
+  const ex = a.history.find(h => h.date === date);
+  if(ex){ if(!confirm('За ' + date + ' уже есть срез. Заменить?')) return; Object.assign(ex, snap); }
+  else a.history.push(snap);
+  saveSnap(id, snap);
+  reopen();
+}
+async function delSnap(id, date){
+  const a = DATA.find(x => x.id === id); if(!a) return;
+  a.history = (a.history||[]).filter(h => h.date !== date);
+  const {error} = await sb.from('social_snapshots').delete().match({user_id:user.id, account_id:id, date});
+  if(error) flash('не удалилось: ' + error.message, true); else flash('удалено');
+  reopen();
+}
+function setMeta(id, f, v){
+  const a = DATA.find(x => x.id === id); if(!a) return;
+  a[f] = v.trim();
+  saveAccountMeta(id);
+}
+async function delAccount(id){
+  const a = DATA.find(x => x.id === id); if(!a) return;
+  if(!confirm('Удалить аккаунт «' + (a.name||id) + '» со всей историей?')) return;
+  const {error} = await sb.from('social_accounts').delete().match({user_id:user.id, id});
+  if(error){ flash('не удалилось: ' + error.message, true); return; }
+  DATA = DATA.filter(x => x.id !== id);
+  closeModal();
+}
+function addAccount(){
+  const name = prompt('Название аккаунта (напр. «Второй канал»):'); if(!name) return;
+  let platform = prompt('Площадка: telegram / youtube / instagram / tiktok', 'telegram');
+  platform = (platform||'').trim().toLowerCase();
+  if(!PLATFORMS[platform]) platform = 'telegram';
+  const id = 'a' + Date.now();
+  const a = {id, platform, name:name.trim(), handle:'', url:'', sort:DATA.length, history:[]};
+  DATA.push(a);
+  saveAccountMeta(id);
+  setView('social');
+  openDetail(id);
 }
 
 /* ============ вкладка «Неделя» ============ */
@@ -566,7 +1186,6 @@ function renderTemplates(){
   });
   document.getElementById('tplView').innerHTML = h;
 }
-function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function copyQ(id, btn){
   navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => {
     btn.textContent = 'Скопировано';
@@ -601,10 +1220,13 @@ function renderTasks(){
 function toggleTask(i){ state.tasks[i] = !state.tasks[i]; saveState(); renderTasks(); }
 
 /* ============ вкладки и тема ============ */
-const VIEWS = {week:'weekView', summary:'sumView', channels:'chView', tpl:'tplView', tasks:'taskView'};
+const VIEWS = {posting:'postView', social:'socialView', week:'weekView', summary:'sumView',
+  channels:'chView', tpl:'tplView', tasks:'taskView'};
 function setView(v){
   for(const k in VIEWS) document.getElementById(VIEWS[k]).style.display = k === v ? '' : 'none';
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === v));
+  if(v === 'posting') renderPosting();
+  if(v === 'social') renderSocial();
   if(v === 'week') renderWeek();
   if(v === 'summary') renderSummary();
   if(v === 'channels') renderChannels();
@@ -619,14 +1241,89 @@ function toggleTheme(){
 }
 (function initTheme(){ const t = localStorage.getItem(THEME_KEY); if(t) document.documentElement.setAttribute('data-theme', t); })();
 
+/* ============ экспорт / импорт ============ */
 function doExport(){
-  const blob = new Blob([JSON.stringify({entries, state, exported:new Date().toISOString()}, null, 2)],
+  const blob = new Blob([JSON.stringify(
+    {entries, state, accounts:DATA, posting:POSTING, exported:new Date().toISOString()}, null, 2)],
     {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'трекер-каналов-' + iso(new Date()) + '.json';
+  a.download = 'трекер-' + iso(new Date()) + '.json';
   a.click();
   URL.revokeObjectURL(a.href);
+}
+/* импорт: понимает и экспорт этого трекера, и экспорт старого трекера соцсетей (localStorage) */
+async function doImport(e){
+  const f = e.target.files[0]; if(!f) return;
+  e.target.value = '';
+  let d;
+  try { d = JSON.parse(await f.text()); }
+  catch(x){ alert('Не удалось прочитать файл'); return; }
+  const jobs = [];
+  let nAcc = 0, nSnap = 0, nPost = 0, nWeek = 0;
+  // аккаунты соцсетей + срезы
+  const accounts = Array.isArray(d) ? d : (Array.isArray(d.accounts) ? d.accounts : null);
+  if(accounts){
+    const accRows = accounts.map((a,i) => ({user_id:user.id, id:a.id || 'a'+Date.now()+'_'+i,
+      platform:PLATFORMS[a.platform] ? a.platform : 'telegram',
+      name:a.name||'', handle:a.handle||'', url:a.url||'', sort:a.sort != null ? a.sort : i}));
+    nAcc = accRows.length;
+    if(accRows.length) jobs.push(sb.from('social_accounts').upsert(accRows, {onConflict:'user_id,id'}));
+    const snapRows = [];
+    accounts.forEach((a,i) => {
+      (a.history||[]).forEach(hh => {
+        if(!hh.date) return;
+        snapRows.push({user_id:user.id, account_id:accRows[i].id, date:hh.date,
+          followers:hh.followers ?? null, views:hh.views ?? null, likes:hh.likes ?? null,
+          posts:hh.posts ?? null, note:hh.note||''});
+      });
+    });
+    nSnap = snapRows.length;
+    if(snapRows.length) jobs.push(sb.from('social_snapshots').upsert(snapRows, {onConflict:'user_id,account_id,date'}));
+  }
+  // отметки постинга
+  if(d && d.posting && typeof d.posting === 'object'){
+    const postRows = [];
+    for(const ds in d.posting){
+      const day = d.posting[ds]; if(!day || typeof day !== 'object') continue;
+      if(day.ts || day.note){ // совсем старый single-mark формат - считаем постом в Telegram
+        postRows.push({user_id:user.id, day:ds, platform:'telegram', note:day.note||'', url:''});
+        continue;
+      }
+      for(const plat in day){
+        if(!PF_ORDER.includes(plat)) continue;
+        const rec = day[plat] || {};
+        postRows.push({user_id:user.id, day:ds, platform:plat, note:rec.note||'', url:rec.url||''});
+      }
+    }
+    nPost = postRows.length;
+    if(postRows.length) jobs.push(sb.from('posting_marks').upsert(postRows, {onConflict:'user_id,day,platform'}));
+  }
+  // недельные показатели и состояние (бэкап этого же трекера)
+  if(d && d.entries && typeof d.entries === 'object'){
+    const weekRows = [];
+    for(const k in d.entries){
+      const [w,c] = k.split('|'); if(!w || !c) continue;
+      const v = d.entries[k];
+      weekRows.push({user_id:user.id, week_start:w, channel:c,
+        touches:+v.touches||0, replies:+v.replies||0, dialogs:+v.dialogs||0,
+        calls:+v.calls||0, deals:+v.deals||0, revenue:+v.revenue||0, hours:+v.hours||0});
+    }
+    nWeek = weekRows.length;
+    if(weekRows.length) jobs.push(sb.from('week_entries').upsert(weekRows, {onConflict:'user_id,week_start,channel'}));
+  }
+  if(d && d.state && typeof d.state === 'object'){
+    jobs.push(sb.from('app_state').upsert({user_id:user.id, data:d.state}, {onConflict:'user_id'}));
+  }
+  if(!jobs.length){ alert('В файле не нашлось данных для импорта'); return; }
+  const results = await Promise.all(jobs);
+  const err = results.find(r => r.error);
+  if(err){ alert('Импорт с ошибкой: ' + err.error.message); return; }
+  await loadAll();
+  const cur = document.querySelector('.tab.active');
+  setView(cur ? cur.dataset.view : 'posting');
+  alert('Импортировано. Аккаунтов: ' + nAcc + ', срезов: ' + nSnap + ', отметок постинга: ' + nPost +
+    (nWeek ? ', недельных строк: ' + nWeek : ''));
 }
 
 /* ============ вход ============ */
@@ -663,15 +1360,14 @@ async function boot(){
   try { await loadAll(); }
   catch(e){
     bootEl.innerHTML = 'Не удалось загрузить данные: ' + e.message +
-      '<br><span class="hint">Проверь, что schema.sql выполнен в Supabase.</span>';
+      '<br><span class="hint">Проверь, что schema.sql и schema_social.sql выполнены в Supabase.</span>';
     return;
   }
   document.getElementById('whoBtn').textContent = user.email + ' · выйти';
   bootEl.style.display = 'none';
   document.getElementById('app').style.display = '';
-  setView('week');
+  setView('posting');
 }
-sb = null;
 boot();
 </script>
 </body>
