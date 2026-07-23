@@ -1195,8 +1195,29 @@ function copyQ(id, btn){
 
 /* ============ вкладка «Задачи» ============ */
 function renderTasks(){
+  // свой задачник
+  const my = state.custom || [];
+  const myOpen = my.filter(t => !t.done).length;
+  let h = `<h2 class="sec">Мои задачи${myOpen ? ` <span class="hint">осталось ${myOpen}</span>` : ''}</h2>
+    <div class="addrow" style="display:flex;gap:8px;margin-bottom:12px">
+      <input type="text" id="newTask" placeholder="Новая задача..." style="flex:1"
+        onkeydown="if(event.key==='Enter')addCustomTask()">
+      <button class="primary" onclick="addCustomTask()">Добавить</button>
+    </div>`;
+  if(!my.length){
+    h += `<div class="hint" style="margin-bottom:16px">Задач пока нет. Впиши первую выше.</div>`;
+  }
+  my.forEach((t, i) => {
+    h += `<div class="task${t.done ? ' done' : ''}">
+      <div class="tbox" onclick="toggleCustomTask(${i})">✓</div>
+      <div class="ttext" onclick="toggleCustomTask(${i})" style="flex:1">${esc(t.text)}</div>
+      <button class="ghost" style="border:none;color:var(--muted);padding:0 6px;font-size:15px"
+        onclick="delCustomTask(${i})" title="Удалить">×</button></div>`;
+  });
+  // задачи из конспекта
   const done = TASKS.filter((_, i) => state.tasks[i]).length;
-  let h = `<div class="callout blue"><span class="ic">✅</span><div>Ближайшие действия из конспекта.
+  h += `<h2 class="sec">Из конспекта «Охота на лидов»</h2>
+    <div class="callout blue"><span class="ic">✅</span><div>Ближайшие действия из конспекта.
     Закрыто <b>${done}</b> из ${TASKS.length}.</div></div>`;
   TASKS.forEach((t, i) => {
     const d = !!state.tasks[i];
@@ -1218,6 +1239,17 @@ function renderTasks(){
   document.getElementById('taskView').innerHTML = h;
 }
 function toggleTask(i){ state.tasks[i] = !state.tasks[i]; saveState(); renderTasks(); }
+function addCustomTask(){
+  const el = document.getElementById('newTask');
+  const t = el.value.trim(); if(!t) return;
+  if(!state.custom) state.custom = [];
+  state.custom.push({text:t, done:false, created:today()});
+  saveState(); renderTasks();
+  const el2 = document.getElementById('newTask');
+  if(el2) el2.focus();
+}
+function toggleCustomTask(i){ state.custom[i].done = !state.custom[i].done; saveState(); renderTasks(); }
+function delCustomTask(i){ state.custom.splice(i,1); saveState(); renderTasks(); }
 
 /* ============ вкладки и тема ============ */
 const VIEWS = {posting:'postView', social:'socialView', week:'weekView', summary:'sumView',

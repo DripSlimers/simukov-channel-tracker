@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lovlead · трекер тест-группы</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --panel2:#fafbfc; --line:#e4e7ec; --line2:#eef0f3;
+  --text:#1a1d23; --muted:#6b7280; --accent:#2563eb; --accent-soft:#e8f0fe;
+  --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f1115;--panel:#171a21;--panel2:#1c2029;--line:#262b34;--line2:#20242d;
+  --text:#e7eaef;--muted:#9aa2ad;--accent:#5b8cff;--accent-soft:#1b2740;--shadow:none;}
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
+header{position:sticky;top:0;z-index:20;background:var(--panel);border-bottom:1px solid var(--line);
+  padding:12px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;box-shadow:var(--shadow);}
+.brand{font-weight:700;font-size:16px;letter-spacing:.2px;margin-right:6px;white-space:nowrap;}
+.brand span{color:var(--accent)}
+.spacer{flex:1}
+button{font-family:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--text);
+  padding:7px 12px;border-radius:8px;cursor:pointer;transition:.12s;white-space:nowrap;}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.primary:hover{opacity:.9;color:#fff}
+button.ghost{background:transparent}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 20px 60px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--panel);padding:6px 11px;border-radius:20px;cursor:pointer;
+  font-size:12.5px;display:flex;align-items:center;gap:6px;user-select:none}
+.chip.active{border-color:var(--accent);background:var(--accent-soft)}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+.chip .n{font-weight:700}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+input[type=text],input[type=date],textarea,select{font-family:inherit;font-size:13px;color:var(--text);
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+input[type=text].search{flex:1;min-width:180px}
+textarea{width:100%;resize:vertical;min-height:60px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;
+  transition:.12s;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.card .stripe{position:absolute;left:0;top:0;bottom:0;width:4px}
+.card h3{margin:0 0 3px;font-size:15px;padding-left:6px}
+.card .contact{color:var(--muted);font-size:12.5px;padding-left:6px;word-break:break-all}
+.card .niche{color:var(--muted);font-size:12.5px;margin:8px 0 10px;padding-left:6px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:34px}
+.card .meta{display:flex;gap:6px;flex-wrap:wrap;padding-left:6px}
+.badge{font-size:11px;padding:3px 8px;border-radius:20px;color:#fff;font-weight:600;white-space:nowrap}
+.tag{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+.card .foot{display:flex;justify-content:space-between;align-items:center;margin-top:11px;padding-left:6px;
+  font-size:11.5px;color:var(--muted)}
+.act-count{display:flex;gap:10px}
+.empty{text-align:center;color:var(--muted);padding:50px 0}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(10,12,16,.5);z-index:40;display:none;
+  align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
+.overlay.open{display:flex}
+.modal{background:var(--panel);border-radius:16px;width:100%;max-width:760px;box-shadow:0 20px 60px rgba(0,0,0,.3);
+  border:1px solid var(--line)}
+.modal .top{display:flex;align-items:flex-start;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);border-radius:16px 16px 0 0;z-index:2}
+.modal .top h2{margin:0;font-size:18px}
+.modal .top .contact{color:var(--muted);font-size:13px}
+.modal .body{padding:18px 20px}
+.close{margin-left:auto;font-size:20px;line-height:1;background:none;border:none;color:var(--muted);cursor:pointer;padding:4px 8px}
+.sec{margin-bottom:20px}
+.sec h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.anketa{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;font-size:13px}
+.anketa .row{display:flex;gap:8px;padding:3px 0}
+.anketa .row b{min-width:120px;color:var(--muted);font-weight:600}
+.anketa .row span{white-space:pre-wrap}
+.feat{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent);margin:2px 4px 2px 0}
+.statusbar{display:flex;flex-wrap:wrap;gap:6px}
+.statusbar .sbtn{border:1px solid var(--line);background:var(--panel);padding:6px 10px;border-radius:8px;font-size:12.5px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.statusbar .sbtn.on{color:#fff;border-color:transparent}
+.logitem,.listitem{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line2);font-size:13px}
+.logitem .date{color:var(--accent);font-weight:600;min-width:82px;font-size:12px}
+.logitem .txt{flex:1;white-space:pre-wrap}
+.listitem .txt{flex:1;white-space:pre-wrap}
+.listitem .del,.logitem .del{color:var(--muted);cursor:pointer;border:none;background:none;font-size:15px;padding:0 4px}
+.listitem .del:hover,.logitem .del:hover{color:#dc2626}
+.addrow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.addrow input[type=text]{flex:1;min-width:160px}
+.addrow textarea{flex:1;min-width:200px;min-height:38px}
+.tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.tab{padding:8px 14px;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);font-weight:600;font-size:13.5px}
+.tab.active{color:var(--accent);border-color:var(--accent)}
+.agg{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 16px;box-shadow:var(--shadow)}
+.agg .aitem{padding:11px 0;border-bottom:1px solid var(--line2)}
+.agg .aitem:last-child{border:none}
+.agg .who{font-size:12px;color:var(--accent);font-weight:600;margin-bottom:2px}
+.hint{font-size:12px;color:var(--muted);margin:2px 0 0}
+.saved{font-size:12px;color:#059669;opacity:0;transition:.3s}
+.saved.show{opacity:1}
+.saved.err{color:#dc2626;opacity:1}
+.empty2{text-align:center;color:var(--muted);padding:50px 0}
+input[type=email]{font-family:inherit;font-size:13px;color:var(--text);
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+.login{max-width:400px;margin:70px auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  padding:28px;box-shadow:var(--shadow);text-align:center}
+.login h1{font-size:20px;margin:0 0 6px}
+.login p{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+.login input{margin-bottom:11px;text-align:center}
+@media(max-width:520px){.anketa .row{flex-direction:column;gap:0}.anketa .row b{min-width:0}}
+</style>
+</head>
+<body>
+<div id="app" style="display:none">
+<header>
+  <div class="brand">lovlead<span>·</span>трекер тест-группы</div>
+  <span class="saved" id="saved"></span>
+  <div class="spacer"></div>
+  <button class="ghost" onclick="addPerson()">+ Человек</button>
+  <button class="ghost" onclick="doExport()">Экспорт JSON</button>
+  <button class="ghost" onclick="document.getElementById('imp').click()" title="Перенос данных из старого трекера (localStorage) или из бэкапа">Импорт</button>
+  <input type="file" id="imp" accept="application/json" style="display:none" onchange="doImport(event)">
+  <button class="ghost" onclick="resetSeed()" title="Загрузить заново всех из анкеты">Сброс к анкете</button>
+  <button class="ghost" id="whoBtn" onclick="signOut()" title="Выйти"></button>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab active" data-view="people" onclick="setView('people')">Тестеры</div>
+    <div class="tab" data-view="questions" onclick="setView('questions')">Все вопросы</div>
+    <div class="tab" data-view="improvements" onclick="setView('improvements')">Все доработки</div>
+  </div>
+
+  <div id="peopleView">
+    <div class="chips" id="chips"></div>
+    <div class="tools">
+      <input type="text" class="search" id="search" placeholder="Поиск: имя, ниша, контакт…" oninput="render()">
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div id="aggView" style="display:none"></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+</div>
+
+<div id="loginBox" class="login" style="display:none">
+  <h1>lovlead · тест-группа</h1>
+  <p>Вход по одноразовой ссылке на почту</p>
+  <input type="email" id="email" placeholder="почта" autocomplete="email">
+  <button class="primary" style="width:100%" onclick="sendLink()" id="loginBtn">Прислать ссылку</button>
+  <p id="loginMsg" style="margin-top:14px;margin-bottom:0"></p>
+</div>
+
+<div id="boot" class="empty2">Загрузка...</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const SEED = [{"id": "t02", "name": "Аноним 1", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Я студент стоматолог, сижу без денег пока что 😂\nБыло бы круто найти клиентов и получать копеечку!", "source": "Холодные звонки и рассылки", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "свой ответ", "price_st": "свой ответ", "price_ag": "свой ответ", "price_own": "На 1 человека около 1000р, все деньги ушли на клод, извините 😄", "features": ["Автопоиск горячих клиентов", "Скрипт разговора", "Расшифровка звонков", "Умные напоминалки"], "anketa_date": "2026-05-06", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t03", "name": "Аноним 2", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "", "source": "Холодные звонки и рассылки", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 1 890 ₽", "price_st": "• 4 990 ₽", "price_ag": "• 11 990 ₽", "price_own": "", "features": ["Автопоиск горячих клиентов", "Умные напоминалки"], "anketa_date": "2026-05-06", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t04", "name": "Аноним 3", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "", "source": "Холодные звонки и рассылки", "actuality": "👍 Интересно, но сначала посмотрю как у других", "price_fr": "• 1 890 ₽", "price_st": "• 3 990 ₽", "price_ag": "• 7 990 ₽", "price_own": "", "features": ["Автопоиск горячих клиентов"], "anketa_date": "2026-05-06", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t05", "name": "Аноним 4", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "", "source": "Холодные звонки и рассылки", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 1 890 ₽", "price_st": "• 3 990 ₽", "price_ag": "• 7 990 ₽", "price_own": "", "features": ["Скрипт разговора", "Расшифровка звонков"], "anketa_date": "2026-05-06", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t06", "name": "Аноним 5", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "", "source": "Холодные звонки и рассылки", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 1 890 ₽", "price_st": "• 4 990 ₽", "price_ag": "• 9 990 ₽", "price_own": "", "features": ["Автопоиск горячих клиентов", "Скрипт разговора"], "anketa_date": "2026-05-06", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t07", "name": "Аноним 6", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "У меня есть программист сможет решить вашу задачу, для этого нужно созвониться чтобы понять детали", "source": "Соцсети и Telegram-каналы", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 1 890 ₽", "price_st": "• 3 990 ₽", "price_ag": "• 11 990 ₽", "price_own": "0", "features": ["Автопоиск горячих клиентов", "Расшифровка звонков"], "anketa_date": "2026-05-06", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t08", "name": "Аноним 7", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "", "source": "Соцсети и Telegram-каналы", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 2 490 ₽", "price_st": "• 4 990 ₽", "price_ag": "• 9 990 ₽", "price_own": "", "features": ["Автопоиск горячих клиентов", "Скрипт разговора"], "anketa_date": "2026-05-07", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t09", "name": "Аноним 8", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Делаю карточки товаров", "source": "Фриланс-биржи (Хабр Фриланс, FL.ru и другие)", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 1 890 ₽", "price_st": "• 3 990 ₽", "price_ag": "• 7 990 ₽", "price_own": "", "features": ["Автопоиск горячих клиентов", "Доска задач"], "anketa_date": "2026-05-11", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t10", "name": "Аноним 9", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "ui ux design", "source": "Фриланс-биржи (Хабр Фриланс, FL.ru и другие)", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 2 990 ₽", "price_st": "• 4 990 ₽", "price_ag": "• 11 990 ₽", "price_own": "", "features": ["Умные напоминалки", "Доска задач"], "anketa_date": "2026-05-11", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t11", "name": "Аноним 10", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Копирайтер, создать логотип и др, дизайнер", "source": "Соцсети и Telegram-каналы", "actuality": "👍 Интересно, но сначала посмотрю как у других", "price_fr": "• 2 490 ₽", "price_st": "• 4 990 ₽", "price_ag": "• 9 990 ₽", "price_own": "4000", "features": ["Доска задач"], "anketa_date": "2026-05-13", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t12", "name": "Аноним 11", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Я дизайнер", "source": "Соцсети и Telegram-каналы", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 1 890 ₽", "price_st": "• 3 990 ₽", "price_ag": "• 7 990 ₽", "price_own": "", "features": ["Автопоиск горячих клиентов", "Скрипт разговора", "Расшифровка звонков", "Умные напоминалки", "Доска задач"], "anketa_date": "2026-05-16", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t13", "name": "Аноним 12", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Дизайн соц сетей, упаковка соц.сетей", "source": "Соцсети и Telegram-каналы", "actuality": "🤔 Идея нравится, но надо подумать", "price_fr": "• 1 890 ₽", "price_st": "", "price_ag": "", "price_own": "", "features": ["Автопоиск горячих клиентов", "Доска задач"], "anketa_date": "2026-05-16", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t14", "name": "Аноним 13", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Аудит и дизайн карточки товара. До/после. Поднимаю СТR. Действующий менеджер аналитик", "source": "Соцсети и Telegram-каналы", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 1 890 ₽", "price_st": "• 4 990 ₽", "price_ag": "• 9 990 ₽", "price_own": "", "features": ["Скрипт разговора"], "anketa_date": "2026-05-17", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t15", "name": "Аноним 14", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Дизайнер , смм , реелсмейкер", "source": "Сарафанное радио и рекомендации", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 1 890 ₽", "price_st": "• 4 990 ₽", "price_ag": "• 11 990 ₽", "price_own": "", "features": ["Автопоиск горячих клиентов"], "anketa_date": "2026-05-17", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t16", "name": "Аноним 15", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Сайты + контекстная реклама, чат-боты, AmoCRM - внедрение и настройка", "source": "Соцсети и Telegram-каналы", "actuality": "🤔 Идея нравится, но надо подумать", "price_fr": "свой ответ", "price_st": "", "price_ag": "", "price_own": "Готов платить за гарантированного клиента. Может сделать первого клиента с постоплатой: оплата после первого реального клиента, и после этого уже помесячная оплата. Сегодня много всяких сервисов с предложениями лидов, но там много мусора, прежде чем платить деньги, нужно быть уверенным, за что платишь", "features": ["Автопоиск горячих клиентов"], "anketa_date": "2026-05-25", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t17", "name": "Аноним 16", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Дизайн презентаций, визиток, баннеров, чек-листов, гайдов и прочего.", "source": "Соцсети и Telegram-каналы", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 2 490 ₽", "price_st": "", "price_ag": "", "price_own": "", "features": ["Расшифровка звонков", "Умные напоминалки", "Доска задач"], "anketa_date": "2026-06-08", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t18", "name": "Аноним 17", "contact": "", "role": "💼 Я не делаю сайты, но продаю другие услуги (напишу в какие)", "niche": "Маркетинг и реклама (контекст, таргет)", "source": "Соцсети и Telegram-каналы", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 1 890 ₽", "price_st": "", "price_ag": "", "price_own": "Перед оплатой хотела бы бета-тест", "features": ["Автопоиск горячих клиентов", "Расшифровка звонков", "Умные напоминалки", "Доска задач"], "anketa_date": "2026-06-09", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t19", "name": "Аноним 18", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Дизайн и разработка сайтов", "source": "Фриланс-биржи (Хабр Фриланс, FL.ru и другие)", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 2 490 ₽", "price_st": "• 4 990 ₽", "price_ag": "• 11 990 ₽", "price_own": "", "features": ["Автопоиск горячих клиентов", "Скрипт разговора", "Умные напоминалки", "Доска задач"], "anketa_date": "2026-06-16", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t20", "name": "Аноним 19", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "", "source": "Тендеры и вакансии (hh.ru, госзакупки)", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "", "price_st": "", "price_ag": "", "price_own": "", "features": ["Автопоиск горячих клиентов", "Доска задач"], "anketa_date": "2026-06-17", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t21", "name": "Ирина", "contact": "https://t.me/IrinaBelyaevaM", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Технический специалист\n- чат-боты\n- рассылки (емейл, мессенджеры, смс)\n- настройки сайтов (могу и собрать из стандартных блоков и настроить и подключить интеграции с сервисами, и подготовить документы для подвала сайта)\n- вебинары", "source": "Холодные звонки и рассылки", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 1 890 ₽", "price_st": "", "price_ag": "", "price_own": "", "features": ["Автопоиск горячих клиентов", "Доска задач"], "anketa_date": "2026-06-17", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t22", "name": "Husnida", "contact": "@Missquen04", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "", "source": "Фриланс-биржи (Хабр Фриланс, FL.ru и другие)", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "", "price_st": "", "price_ag": "", "price_own": "", "features": ["Автопоиск горячих клиентов"], "anketa_date": "2026-06-18", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t23", "name": "Адам", "contact": "@tfd666", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "", "source": "Сарафанное радио и рекомендации", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 2 490 ₽", "price_st": "", "price_ag": "", "price_own": "", "features": ["Автопоиск горячих клиентов"], "anketa_date": "2026-06-19", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t24", "name": "Святослав", "contact": "https://t.me/Svyatt", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "", "source": "Фриланс-биржи (Хабр Фриланс, FL.ru и другие)", "actuality": "👍 Интересно, но сначала посмотрю как у других", "price_fr": "• 2 490 ₽", "price_st": "• 4 990 ₽", "price_ag": "• 9 990 ₽", "price_own": "", "features": ["Доска задач"], "anketa_date": "2026-06-19", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t25", "name": "Мирзага", "contact": "@mirzhkd", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "", "source": "Холодные звонки и рассылки", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 1 890 ₽", "price_st": "• 4 990 ₽", "price_ag": "• 9 990 ₽", "price_own": "", "features": ["Автопоиск горячих клиентов", "Доска задач"], "anketa_date": "2026-06-19", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t26", "name": "Александр", "contact": "@Alepasik", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "", "source": "Соцсети и Telegram-каналы", "actuality": "👍 Интересно, но сначала посмотрю как у других", "price_fr": "• 2 490 ₽", "price_st": "• 5 990 ₽", "price_ag": "• 11 990 ₽", "price_own": "", "features": ["Скрипт разговора", "Доска задач"], "anketa_date": "2026-06-21", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t27", "name": "Алим", "contact": "+79064923914", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Разработка веб-интерфейсов, каталогов данных на Replit + AI-генерация коммерческого контента (Midjourney, Grok, Stable Diffusion).", "source": "Соцсети и Telegram-каналы", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "• 1 890 ₽", "price_st": "", "price_ag": "", "price_own": "", "features": ["Автопоиск горячих клиентов", "Умные напоминалки"], "anketa_date": "2026-06-22", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t28", "name": "Ирина", "contact": "", "role": "🧑‍💻 Фрилансер, работаю один", "niche": "Делаю сайты на тильде, создаю лид-магниты и мини-продукты (edtech)", "source": "Соцсети и Telegram-каналы", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "свой ответ", "price_st": "", "price_ag": "", "price_own": "900р, первый месяц 500р", "features": ["Автопоиск горячих клиентов", "Умные напоминалки"], "anketa_date": "2026-06-24", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}, {"id": "t29", "name": "Святослав", "contact": "tg: @svyat_target", "role": "💼 Я не делаю сайты, но продаю другие услуги (напишу в какие)", "niche": "Мое направление: таргетированая реклама", "source": "Соцсети и Telegram-каналы", "actuality": "🔥 Очень нужно, готов тестировать и давать обратную связь", "price_fr": "свой ответ", "price_st": "• 3 990 ₽", "price_ag": "• 9 990 ₽", "price_own": "990", "features": ["Автопоиск горячих клиентов", "Скрипт разговора"], "anketa_date": "2026-06-26", "status": "Не приглашён", "comment": "", "log": [], "questions": [], "improvements": []}];
+const STATUSES = [
+  {k:'Не приглашён',c:'#6b7280'},
+  {k:'Приглашение отправлено',c:'#2563eb'},
+  {k:'Доступ выдан',c:'#7c3aed'},
+  {k:'Активен',c:'#059669'},
+  {k:'Оплатил',c:'#0d9488'},
+  {k:'Отказ',c:'#dc2626'},
+];
+let sb=null, user=null;
+let DATA=[], filter=null, view='people', openId=null;
+
+function flash(msg,isErr){
+  const el=document.getElementById('saved');
+  el.textContent=msg;
+  el.className='saved show'+(isErr?' err':'');
+  if(!isErr)setTimeout(()=>{el.className='saved';},1600);
+}
+/* сохранение одного тестера: вся карточка одним jsonb, с дебаунсом */
+let saveTimers={};
+function saveTester(id){
+  clearTimeout(saveTimers[id]);
+  saveTimers[id]=setTimeout(async()=>{
+    const d=DATA.find(x=>x.id===id);if(!d)return;
+    const {error}=await sb.from('lovlead_testers').upsert(
+      {user_id:user.id,id:d.id,data:d},{onConflict:'user_id,id'});
+    if(error)flash('не сохранилось: '+error.message,true);else flash('сохранено');
+  },400);
+}
+async function saveAllTesters(){
+  if(!DATA.length)return;
+  const rows=DATA.map(d=>({user_id:user.id,id:d.id,data:d}));
+  const {error}=await sb.from('lovlead_testers').upsert(rows,{onConflict:'user_id,id'});
+  if(error)flash('не сохранилось: '+error.message,true);else flash('сохранено');
+}
+async function loadAll(){
+  const {data,error}=await sb.from('lovlead_testers').select('id,data').order('id');
+  if(error)throw error;
+  DATA=(data||[]).map(r=>r.data);
+  /* первый вход: загрузить 28 человек из анкеты */
+  if(!DATA.length){
+    DATA=structuredClone(SEED);
+    await saveAllTesters();
+  }
+}
+function colorOf(s){const x=STATUSES.find(z=>z.k===s);return x?x.c:'#6b7280';}
+function esc(t){return (t||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
+
+function setView(v){view=v;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+  document.getElementById('peopleView').style.display = v==='people'?'':'none';
+  document.getElementById('aggView').style.display = v==='people'?'none':'';
+  render();
+}
+
+function renderChips(){
+  const box=document.getElementById('chips');
+  let h=`<div class="chip ${filter===null?'active':''}" onclick="setFilter(null)"><span class="n">${DATA.length}</span> Все</div>`;
+  STATUSES.forEach(s=>{const n=DATA.filter(d=>d.status===s.k).length;
+    h+=`<div class="chip ${filter===s.k?'active':''}" onclick="setFilter('${s.k.replace(/'/g,"")}')"><span class="dot" style="background:${s.c}"></span><span class="n">${n}</span> ${s.k}</div>`;});
+  box.innerHTML=h;
+}
+function setFilter(f){filter=f;render();}
+
+function render(){
+  renderChips();
+  if(view!=='people'){renderAgg();return;}
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const grid=document.getElementById('grid');
+  let list=DATA.filter(d=>(!filter||d.status===filter));
+  if(q)list=list.filter(d=>((d.name+' '+d.niche+' '+d.contact+' '+d.role).toLowerCase().includes(q)));
+  if(!list.length){grid.innerHTML=`<div class="empty">Пусто. ${DATA.length?'Смени фильтр или поиск.':'Нажми «Сброс к анкете», чтобы загрузить людей.'}</div>`;return;}
+  grid.innerHTML=list.map(d=>{
+    const c=colorOf(d.status);
+    const feats=(d.features||[]).slice(0,3).map(f=>`<span class="tag">${esc(f)}</span>`).join('');
+    return `<div class="card" onclick="openDetail('${d.id}')">
+      <div class="stripe" style="background:${c}"></div>
+      <h3>${esc(d.name)}</h3>
+      <div class="contact">${esc(d.contact)||'&mdash;'}</div>
+      <div class="niche">${esc(d.niche)||esc(d.role)||''}</div>
+      <div class="meta"><span class="badge" style="background:${c}">${esc(d.status)}</span>${feats}</div>
+      <div class="foot">
+        <span>${esc(d.actuality?d.actuality.split(',')[0]:'')}</span>
+        <span class="act-count">${d.log&&d.log.length?('📅 '+d.log.length):''} ${d.questions&&d.questions.length?('❓ '+d.questions.length):''} ${d.improvements&&d.improvements.length?('🛠 '+d.improvements.length):''}</span>
+      </div>
+    </div>`;}).join('');
+}
+
+function renderAgg(){
+  const box=document.getElementById('aggView');
+  const field = view==='questions'?'questions':'improvements';
+  const title = view==='questions'?'вопросов':'доработок';
+  let rows=[];
+  DATA.forEach(d=>(d[field]||[]).forEach((t,i)=>rows.push({who:d.name,id:d.id,txt:t,idx:i})));
+  if(!rows.length){box.innerHTML=`<div class="empty">Пока нет ${title}. Добавляй их в карточках тестеров.</div>`;return;}
+  box.innerHTML=`<div class="agg">`+rows.map(r=>`<div class="aitem"><div class="who" style="cursor:pointer" onclick="openDetail('${r.id}')">${esc(r.who)} →</div><div>${esc(r.txt)}</div></div>`).join('')+`</div>`;
+}
+
+function openDetail(id){
+  openId=id; const d=DATA.find(x=>x.id===id); if(!d)return;
+  const anketa=[
+    ['Кто',d.role],['Ниша / услуги',d.niche],['Как ищет клиентов',d.source],
+    ['Актуальность',d.actuality],
+    ['Цена фрилансер',d.price_fr],['Цена студия',d.price_st],['Цена агентство',d.price_ag],
+    ['Свой ответ по цене',d.price_own],['Дата анкеты',d.anketa_date],
+  ].filter(r=>r[1]).map(r=>`<div class="row"><b>${r[0]}</b><span>${esc(r[1])}</span></div>`).join('');
+  const feats=(d.features||[]).map(f=>`<span class="feat">${esc(f)}</span>`).join('')||'<span class="hint">не отмечено</span>';
+  const sbtns=STATUSES.map(s=>`<div class="sbtn ${d.status===s.k?'on':''}" style="${d.status===s.k?('background:'+s.c):''}" onclick="setStatus('${d.id}','${s.k}')"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:${s.c}"></span>${s.k}</div>`).join('');
+  const logs=(d.log||[]).slice().reverse().map((l,ri)=>{const idx=d.log.length-1-ri;
+    return `<div class="logitem"><span class="date">${esc(l.date)}</span><span class="txt">${esc(l.text)}</span><button class="del" onclick="delLog('${d.id}',${idx})">×</button></div>`;}).join('')||'<div class="hint">Записей нет. Добавь первую ниже.</div>';
+  const ql=(d.questions||[]).map((t,i)=>`<div class="listitem"><span class="txt">${esc(t)}</span><button class="del" onclick="delItem('${d.id}','questions',${i})">×</button></div>`).join('')||'<div class="hint">Вопросов нет.</div>';
+  const il=(d.improvements||[]).map((t,i)=>`<div class="listitem"><span class="txt">${esc(t)}</span><button class="del" onclick="delItem('${d.id}','improvements',${i})">×</button></div>`).join('')||'<div class="hint">Доработок нет.</div>';
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('modal').innerHTML=`
+    <div class="top">
+      <div><h2>${esc(d.name)}</h2><div class="contact">${esc(d.contact)||'контакт не указан'}</div></div>
+      <button class="close" onclick="closeModal()">×</button>
+    </div>
+    <div class="body">
+      <div class="sec"><h4>Статус</h4><div class="statusbar">${sbtns}</div></div>
+      <div class="sec"><h4>Данные из анкеты</h4><div class="anketa">${anketa}<div class="row"><b>Важные фичи</b><span>${feats}</span></div></div></div>
+      <div class="sec"><h4>Дневник по дням</h4>${logs}
+        <div class="addrow">
+          <input type="date" id="logdate" value="${today}">
+          <textarea id="logtext" placeholder="Что было сегодня: зашёл/не зашёл, что сказал, реакция…"></textarea>
+          <button class="primary" onclick="addLog('${d.id}')">Добавить</button>
+        </div>
+      </div>
+      <div class="sec"><h4>Вопросы от тестера</h4>${ql}
+        <div class="addrow"><input type="text" id="qtext" placeholder="Вопрос, который задал…" onkeydown="if(event.key==='Enter')addItem('${d.id}','questions','qtext')">
+        <button class="primary" onclick="addItem('${d.id}','questions','qtext')">+</button></div>
+      </div>
+      <div class="sec"><h4>Доработки к проекту</h4>${il}
+        <div class="addrow"><input type="text" id="itext" placeholder="Что надо доработать по его фидбеку…" onkeydown="if(event.key==='Enter')addItem('${d.id}','improvements','itext')">
+        <button class="primary" onclick="addItem('${d.id}','improvements','itext')">+</button></div>
+      </div>
+      <div class="sec"><h4>Общий комментарий</h4>
+        <textarea id="gcomment" placeholder="Заметки по человеку…" onchange="setComment('${d.id}',this.value)">${esc(d.comment)}</textarea>
+      </div>
+    </div>`;
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open');openId=null;render();}
+function reopen(){if(openId)openDetail(openId);}
+
+function setStatus(id,s){const d=DATA.find(x=>x.id===id);d.status=s;saveTester(id);reopen();}
+function setComment(id,v){const d=DATA.find(x=>x.id===id);d.comment=v;saveTester(id);}
+function addLog(id){const d=DATA.find(x=>x.id===id);const t=document.getElementById('logtext').value.trim();const dt=document.getElementById('logdate').value;
+  if(!t)return; d.log=d.log||[]; d.log.push({date:dt||new Date().toISOString().slice(0,10),text:t}); saveTester(id);reopen();}
+function delLog(id,i){const d=DATA.find(x=>x.id===id);d.log.splice(i,1);saveTester(id);reopen();}
+function addItem(id,field,inputId){const d=DATA.find(x=>x.id===id);const el=document.getElementById(inputId);const t=el.value.trim();
+  if(!t)return; d[field]=d[field]||[]; d[field].push(t); saveTester(id);reopen();}
+function delItem(id,field,i){const d=DATA.find(x=>x.id===id);d[field].splice(i,1);saveTester(id);reopen();}
+
+function addPerson(){const name=prompt('Имя нового человека:');if(!name)return;
+  const id='n'+Date.now();
+  DATA.push({id,name,contact:'',role:'',niche:'',source:'',actuality:'',price_fr:'',price_st:'',price_ag:'',price_own:'',features:[],anketa_date:'',status:'Не приглашён',comment:'',log:[],questions:[],improvements:[]});
+  saveTester(id);render();openDetail(id);}
+
+function doExport(){const blob=new Blob([JSON.stringify(DATA,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='lovlead-tracker-'+new Date().toISOString().slice(0,10)+'.json';a.click();}
+/* импорт: JSON-массив тестеров (экспорт старого или этого трекера), заливается в Supabase */
+async function doImport(e){
+  const f=e.target.files[0];if(!f)return;
+  e.target.value='';
+  let d;
+  try{d=JSON.parse(await f.text());}
+  catch(x){alert('Не удалось прочитать файл');return;}
+  if(!Array.isArray(d)||!d.length){alert('В файле не нашлось списка тестеров');return;}
+  const rows=d.map((p,i)=>({user_id:user.id,id:p.id||'n'+Date.now()+'_'+i,data:p}));
+  const {error}=await sb.from('lovlead_testers').upsert(rows,{onConflict:'user_id,id'});
+  if(error){alert('Импорт с ошибкой: '+error.message);return;}
+  await loadAll();
+  render();
+  alert('Импортировано: '+rows.length+' записей');
+}
+async function resetSeed(){
+  if(!confirm('Загрузить заново всех из анкеты? Текущие изменения в трекере пропадут (сделай Экспорт заранее).'))return;
+  const {error}=await sb.from('lovlead_testers').delete().eq('user_id',user.id);
+  if(error){alert('Не получилось: '+error.message);return;}
+  DATA=structuredClone(SEED);
+  await saveAllTesters();
+  render();
+}
+
+/* ============ вход ============ */
+async function sendLink(){
+  const email=document.getElementById('email').value.trim();
+  const msg=document.getElementById('loginMsg');
+  if(!email){msg.innerHTML='<span style="color:#dc2626">Введи почту</span>';return;}
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;btn.textContent='Отправляю...';
+  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.href.split('#')[0]}});
+  btn.disabled=false;btn.textContent='Прислать ссылку';
+  msg.innerHTML=error
+    ?'<span style="color:#dc2626">'+error.message+'</span>'
+    :'<span style="color:#059669">Ссылка ушла на '+email+'. Открой письмо на этом же устройстве.</span>';
+}
+async function signOut(){await sb.auth.signOut();location.reload();}
+
+/* ============ старт ============ */
+async function boot(){
+  const cfg=window.TRACKER_CONFIG||{};
+  const bootEl=document.getElementById('boot');
+  if(!cfg.SUPABASE_URL){
+    bootEl.innerHTML='Не заполнен <b>config.js</b>: нужны SUPABASE_URL и SUPABASE_ANON_KEY.';
+    return;
+  }
+  sb=supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){
+    bootEl.style.display='none';
+    document.getElementById('loginBox').style.display='';
+    return;
+  }
+  user=session.user;
+  try{await loadAll();}
+  catch(e){
+    bootEl.innerHTML='Не удалось загрузить данные: '+e.message+
+      '<br><span class="hint">Проверь, что schema_lovlead.sql выполнен в Supabase.</span>';
+    return;
+  }
+  document.getElementById('whoBtn').textContent=user.email+' · выйти';
+  bootEl.style.display='none';
+  document.getElementById('app').style.display='';
+  render();
+}
+boot();
+</script>
+</body>
+</html>
