@@ -209,6 +209,13 @@ blockquote{margin:0;padding:11px 14px;border-left:3px solid var(--accent);backgr
 .today-head .prog.full{color:var(--up)}
 .today-sub{color:var(--muted);font-size:12.5px;margin-bottom:14px}
 .pf-list{display:grid;gap:8px}
+.pf-group{margin-bottom:14px}
+.pf-group:last-child{margin-bottom:0}
+.pf-group-h{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;
+  margin-bottom:7px;display:flex;align-items:center;gap:8px}
+.pf-group-n{font-weight:800;color:var(--text)}
+.pf-group-n.full{color:var(--up)}
+.pf-stats-h{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:6px 0 10px}
 .pf-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
   border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel2);transition:.12s}
 .pf-row.on{background:color-mix(in srgb,var(--up) 12%,var(--panel));border-color:color-mix(in srgb,var(--up) 40%,var(--line))}
@@ -234,7 +241,7 @@ blockquote{margin:0;padding:11px 14px;border-left:3px solid var(--accent);backgr
 .mx-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
 .mx-head b{font-size:15px;text-transform:capitalize}
 .mx-scroll{overflow-x:auto}
-table.mx{border:none;border-radius:0;box-shadow:none;min-width:520px}
+table.mx{border:none;border-radius:0;box-shadow:none;min-width:640px}
 table.mx th,table.mx td{text-align:center;padding:9px 6px;border-bottom:1px solid var(--line2)}
 table.mx th:first-child,table.mx td:first-child{text-align:left;padding-left:16px;white-space:nowrap}
 table.mx th.pcol{font-size:16px;letter-spacing:0}
@@ -423,12 +430,28 @@ const PLATFORMS = {
   instagram: {label:'Instagram',       emoji:'📸', color:'#e1306c'},
   tiktok:    {label:'TikTok',          emoji:'🎵', color:'#ff2d55'},
 };
-const PF_ORDER = ['telegram','youtube','instagram','tiktok'];
+/* цели ежедневного постинга: личные 4 площадки + 2 канала lovlead */
+const PF_ORDER = ['telegram','youtube','instagram','tiktok','lov_tg','lov_tt'];
+const PF_PERSONAL = ['telegram','youtube','instagram','tiktok'];
+const POST_META = {
+  telegram:  {...PLATFORMS.telegram,  group:'Личное'},
+  youtube:   {...PLATFORMS.youtube,   group:'Личное'},
+  instagram: {...PLATFORMS.instagram, group:'Личное'},
+  tiktok:    {...PLATFORMS.tiktok,    group:'Личное'},
+  lov_tg:    {label:'Telegram lovlead', emoji:'✈️', color:'#229ED9', group:'lovlead'},
+  lov_tt:    {label:'TikTok lovlead',   emoji:'🎵', color:'#8b5cf6', group:'lovlead'},
+};
+const POST_GROUPS = [
+  {name:'Личное', keys:PF_PERSONAL},
+  {name:'lovlead', keys:PF_ORDER.filter(k => POST_META[k].group === 'lovlead')},
+];
 const SEED = [
   {id:'tg', platform:'telegram',  name:'Личный канал',   handle:'@simukovich', url:'https://t.me/simukovich'},
   {id:'yt', platform:'youtube',   name:'YouTube Shorts', handle:'',            url:''},
   {id:'ig', platform:'instagram', name:'Instagram',      handle:'designbrosk', url:'https://instagram.com/designbrosk'},
   {id:'tt', platform:'tiktok',    name:'TikTok',         handle:'@simukovich', url:'https://www.tiktok.com/@simukovich'},
+  {id:'lovtg', platform:'telegram', name:'Telegram lovlead', handle:'', url:''},
+  {id:'lovtt', platform:'tiktok',   name:'TikTok lovlead',   handle:'', url:''},
 ];
 const RU_MONTHS=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
 const RU_DOW=['вс','пн','вт','ср','чт','пт','сб'];
@@ -607,7 +630,7 @@ async function loadAll(){
 /* ============ вкладка «Постинг» ============ */
 function dayObj(ds){ return POSTING[ds] || {}; }
 function isPosted(ds, plat){ const d = POSTING[ds]; return !!(d && d[plat]); }
-function isFullDay(ds){ return PF_ORDER.every(p => isPosted(ds, p)); }
+function isFullDay(ds){ return PF_PERSONAL.every(p => isPosted(ds, p)); }
 function markedDates(){ return Object.keys(POSTING).filter(ds => Object.keys(POSTING[ds]||{}).length).sort(); }
 
 function setPost(ds, plat, on, extra){
@@ -685,10 +708,9 @@ function renderPosting(){
   const t = today();
   const td = new Date();
 
-  // ---- Сегодня ----
-  const doneCount = PF_ORDER.filter(p => isPosted(t, p)).length;
-  const todayRows = PF_ORDER.map(plat => {
-    const p = PLATFORMS[plat]; const on = isPosted(t, plat);
+  // ---- Сегодня (по группам) ----
+  const rowHtml = plat => {
+    const p = POST_META[plat]; const on = isPosted(t, plat);
     const note = on ? (dayObj(t)[plat].note||'') : '';
     return `<div class="pf-row ${on?'on':''}">
       <button class="pf-check ${on?'on':''}" onclick="toggleTodayPf('${plat}')" aria-label="Отметить ${p.label}" title="${on?'Снять отметку':'Отметить пост'}">${on?'✓':''}</button>
@@ -698,33 +720,45 @@ function renderPosting(){
       </div>
       <button class="pf-open" onclick="openDay('${t}')" title="Ссылка и детали">детали</button>
     </div>`;
-  }).join('');
-  const prog = `<span class="prog ${doneCount===PF_ORDER.length?'full':''}">${doneCount}/${PF_ORDER.length}</span>`;
+  };
+  const totalDone = PF_ORDER.filter(p => isPosted(t, p)).length;
+  let todayInner = '';
+  for(const g of POST_GROUPS){
+    const done = g.keys.filter(p => isPosted(t, p)).length;
+    todayInner += `<div class="pf-group">
+      <div class="pf-group-h">${g.name} <span class="pf-group-n ${done===g.keys.length?'full':''}">${done}/${g.keys.length}</span></div>
+      <div class="pf-list">${g.keys.map(rowHtml).join('')}</div>
+    </div>`;
+  }
   const todayBlock = `<div class="today-block">
-    <div class="today-head"><h3>Сегодня</h3><span class="date">${t} · ${RU_DOW[td.getDay()]}</span>${prog}</div>
-    <div class="today-sub">${doneCount===PF_ORDER.length?'🔥 Все площадки закрыты. Красавчик.':'Цель дня - пост в каждую площадку. Жми галочку, как выложил.'}</div>
-    <div class="pf-list">${todayRows}</div>
+    <div class="today-head"><h3>Сегодня</h3><span class="date">${t} · ${RU_DOW[td.getDay()]}</span>
+      <span class="prog ${totalDone===PF_ORDER.length?'full':''}">${totalDone}/${PF_ORDER.length}</span></div>
+    <div class="today-sub">${totalDone===PF_ORDER.length?'🔥 Все площадки закрыты. Красавчик.':'Цель дня - пост в каждую площадку. Жми галочку, как выложил.'}</div>
+    ${todayInner}
   </div>`;
 
-  // ---- Статы по площадкам ----
+  // ---- Статы по площадкам (по группам) ----
   const elapsed = daysElapsedInMonth(calY, calM);
   const fs = fullStreak();
-  let statCards = PF_ORDER.map(plat => {
-    const p = PLATFORMS[plat]; const st = platformStreak(plat); const mc = monthCount(plat, calY, calM);
+  const statCard = plat => {
+    const p = POST_META[plat]; const st = platformStreak(plat); const mc = monthCount(plat, calY, calM);
     return `<div class="pf-stat">
       <div class="pstripe" style="background:${p.color}"></div>
       <div class="ph"><span>${p.emoji}</span>${p.label}</div>
       <div class="streak" style="${st>0?'color:var(--up)':''}">${st} <small>${plural(st)} 🔥</small></div>
       <div class="mrow"><span>в этом месяце</span><b>${mc}${elapsed?' / '+elapsed:''}</b></div>
     </div>`;
-  }).join('');
+  };
   const fullCard = `<div class="pf-stat">
       <div class="pstripe" style="background:var(--accent)"></div>
       <div class="ph"><span>🎯</span>Полных дней подряд</div>
       <div class="streak" style="${fs>0?'color:var(--up)':''}">${fs} <small>${plural(fs)}</small></div>
-      <div class="mrow"><span>все 4 площадки закрыты</span><b>${elapsed?monthFullCount(calY,calM)+' / '+elapsed:monthFullCount(calY,calM)}</b></div>
+      <div class="mrow"><span>личные 4 площадки закрыты</span><b>${elapsed?monthFullCount(calY,calM)+' / '+elapsed:monthFullCount(calY,calM)}</b></div>
     </div>`;
-  const stats = `<div class="pf-stats">${statCards}${fullCard}</div>`;
+  const stats = `<div class="pf-stats-h">Личное</div>
+    <div class="pf-stats">${PF_PERSONAL.map(statCard).join('')}${fullCard}</div>
+    <div class="pf-stats-h">lovlead</div>
+    <div class="pf-stats">${POST_GROUPS[1].keys.map(statCard).join('')}</div>`;
 
   // ---- Матрица месяца ----
   const dim = new Date(calY, calM+1, 0).getDate();
@@ -757,7 +791,7 @@ function renderPosting(){
     </div>
     <div class="mx-scroll"><table class="mx"><thead><tr>
       <th>День</th>
-      ${PF_ORDER.map(p => `<th class="pcol" title="${PLATFORMS[p].label}">${PLATFORMS[p].emoji}</th>`).join('')}
+      ${PF_ORDER.map(p => `<th class="pcol" title="${POST_META[p].label}">${POST_META[p].emoji}</th>`).join('')}
     </tr></thead><tbody>${rowsHtml}</tbody></table></div>
     <div class="mx-legend">
       <span><i class="g"></i>выложено (клик по галочке = снять)</span>
@@ -775,7 +809,7 @@ function openDay(ds){
   dayOpen = ds; openId = null;
   const d = parseISO(ds);
   const rows = PF_ORDER.map(plat => {
-    const p = PLATFORMS[plat]; const on = isPosted(ds, plat); const rec = on ? dayObj(ds)[plat] : {note:'',url:''};
+    const p = POST_META[plat]; const on = isPosted(ds, plat); const rec = on ? dayObj(ds)[plat] : {note:'',url:''};
     return `<div class="day-pf ${on?'on':'off'}" id="daypf_${plat}">
       <div class="dh"><span class="pemoji">${p.emoji}</span><span class="nm">${p.label}</span>
         <button class="tog ${on?'primary':''}" onclick="dayToggle('${plat}')">${on?'✓ выложено':'отметить'}</button>
