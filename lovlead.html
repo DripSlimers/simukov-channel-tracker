@@ -56,6 +56,13 @@ textarea{width:100%;resize:vertical;min-height:60px}
   font-size:11.5px;color:var(--muted)}
 .act-count{display:flex;gap:10px}
 .empty{text-align:center;color:var(--muted);padding:50px 0}
+/* доступ 7 дней */
+.acc{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;margin:9px 0 0 6px;white-space:nowrap}
+.acc.active{background:rgba(5,150,105,.14);color:#059669}
+.acc.expiring{background:rgba(217,119,6,.16);color:#d97706}
+.acc.expired{background:rgba(220,38,38,.16);color:#ef4444}
+.acc.closed{background:rgba(107,114,128,.14);color:var(--muted)}
+.acc.nostart{background:rgba(124,58,237,.16);color:#8b5cf6}
 /* modal */
 .overlay{position:fixed;inset:0;background:rgba(10,12,16,.5);z-index:40;display:none;
   align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
@@ -207,6 +214,41 @@ async function loadAll(){
 function colorOf(s){const x=STATUSES.find(z=>z.k===s);return x?x.c:'#6b7280';}
 function esc(t){return (t||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
 
+/* ===== доступ на 7 дней ===== */
+const TRIAL_DAYS=7;
+const TRIAL_STATUSES=['Доступ выдан','Активен'];
+function todayISO(){return new Date().toISOString().slice(0,10);}
+function dayStart(iso){return new Date(iso+'T00:00:00');}
+function daysBetween(aISO,bISO){return Math.round((dayStart(bISO)-dayStart(aISO))/86400000);}
+function addDaysISO(iso,n){const d=dayStart(iso);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+function fmtRu(iso){if(!iso)return '';return dayStart(iso).toLocaleDateString('ru-RU',{day:'numeric',month:'short'});}
+function accessInfo(d){
+  if(d.access_closed)return {state:'closed'};
+  if(!TRIAL_STATUSES.includes(d.status))return {state:'none'};
+  if(!d.access_start)return {state:'nostart'};
+  const elapsed=daysBetween(d.access_start,todayISO());
+  const remaining=TRIAL_DAYS-elapsed;
+  const dayNum=Math.min(Math.max(elapsed+1,1),TRIAL_DAYS);
+  if(remaining<=0)return {state:'expired',overdue:-remaining,dayNum:TRIAL_DAYS,remaining};
+  if(remaining<=2)return {state:'expiring',remaining,dayNum};
+  return {state:'active',remaining,dayNum};
+}
+function accBadge(ai){
+  if(ai.state==='active')return `<span class="acc active">🔓 ещё ${ai.remaining} дн.</span>`;
+  if(ai.state==='expiring')return `<span class="acc expiring">⏳ ещё ${ai.remaining} дн.</span>`;
+  if(ai.state==='expired')return `<span class="acc expired">⛔ доступ истёк — закрой</span>`;
+  if(ai.state==='nostart')return `<span class="acc nostart">🔓 отметь дату выдачи</span>`;
+  if(ai.state==='closed')return `<span class="acc closed">🔒 доступ закрыт</span>`;
+  return '';
+}
+function accStateText(ai){
+  if(ai.state==='active'||ai.state==='expiring')return `день ${ai.dayNum} из ${TRIAL_DAYS} · осталось ${ai.remaining} дн.`;
+  if(ai.state==='expired')return ai.overdue===0?`срок вышел сегодня — пора закрыть доступ`:`истёк ${ai.overdue} дн. назад — пора закрыть доступ`;
+  if(ai.state==='nostart')return `дата выдачи не отмечена — нажми «Выдал сегодня» или укажи дату`;
+  if(ai.state==='closed')return `доступ закрыт`;
+  return `отсчёт начнётся после статуса «Доступ выдан» / «Активен»`;
+}
+
 function setView(v){view=v;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
   document.getElementById('peopleView').style.display = v==='people'?'':'none';
@@ -219,6 +261,8 @@ function renderChips(){
   let h=`<div class="chip ${filter===null?'active':''}" onclick="setFilter(null)"><span class="n">${DATA.length}</span> Все</div>`;
   STATUSES.forEach(s=>{const n=DATA.filter(d=>d.status===s.k).length;
     h+=`<div class="chip ${filter===s.k?'active':''}" onclick="setFilter('${s.k.replace(/'/g,"")}')"><span class="dot" style="background:${s.c}"></span><span class="n">${n}</span> ${s.k}</div>`;});
+  const expN=DATA.filter(d=>accessInfo(d).state==='expired').length;
+  h+=`<div class="chip ${filter==='__expired__'?'active':''}" style="${expN?'border-color:#dc2626;background:rgba(220,38,38,.10)':''}" onclick="setFilter('__expired__')"><span class="dot" style="background:#dc2626"></span><span class="n">${expN}</span> ⛔ К закрытию</div>`;
   box.innerHTML=h;
 }
 function setFilter(f){filter=f;render();}
@@ -228,18 +272,23 @@ function render(){
   if(view!=='people'){renderAgg();return;}
   const q=(document.getElementById('search').value||'').toLowerCase();
   const grid=document.getElementById('grid');
-  let list=DATA.filter(d=>(!filter||d.status===filter));
+  let list;
+  if(filter==='__expired__') list=DATA.filter(d=>accessInfo(d).state==='expired');
+  else list=DATA.filter(d=>(!filter||d.status===filter));
   if(q)list=list.filter(d=>((d.name+' '+d.niche+' '+d.contact+' '+d.role).toLowerCase().includes(q)));
   if(!list.length){grid.innerHTML=`<div class="empty">Пусто. ${DATA.length?'Смени фильтр или поиск.':'Нажми «Сброс к анкете», чтобы загрузить людей.'}</div>`;return;}
   grid.innerHTML=list.map(d=>{
     const c=colorOf(d.status);
+    const ai=accessInfo(d);
+    const stripeC=ai.state==='expired'?'#dc2626':c;
     const feats=(d.features||[]).slice(0,3).map(f=>`<span class="tag">${esc(f)}</span>`).join('');
     return `<div class="card" onclick="openDetail('${d.id}')">
-      <div class="stripe" style="background:${c}"></div>
+      <div class="stripe" style="background:${stripeC}"></div>
       <h3>${esc(d.name)}</h3>
       <div class="contact">${esc(d.contact)||'&mdash;'}</div>
       <div class="niche">${esc(d.niche)||esc(d.role)||''}</div>
       <div class="meta"><span class="badge" style="background:${c}">${esc(d.status)}</span>${feats}</div>
+      ${accBadge(ai)}
       <div class="foot">
         <span>${esc(d.actuality?d.actuality.split(',')[0]:'')}</span>
         <span class="act-count">${d.log&&d.log.length?('📅 '+d.log.length):''} ${d.questions&&d.questions.length?('❓ '+d.questions.length):''} ${d.improvements&&d.improvements.length?('🛠 '+d.improvements.length):''}</span>
@@ -272,6 +321,24 @@ function openDetail(id){
   const ql=(d.questions||[]).map((t,i)=>`<div class="listitem"><span class="txt">${esc(t)}</span><button class="del" onclick="delItem('${d.id}','questions',${i})">×</button></div>`).join('')||'<div class="hint">Вопросов нет.</div>';
   const il=(d.improvements||[]).map((t,i)=>`<div class="listitem"><span class="txt">${esc(t)}</span><button class="del" onclick="delItem('${d.id}','improvements',${i})">×</button></div>`).join('')||'<div class="hint">Доработок нет.</div>';
   const today=new Date().toISOString().slice(0,10);
+  const ai=accessInfo(d);
+  const accStart=d.access_start||'';
+  const accBtns=[
+    accStart?'':`<button class="primary" onclick="grantToday('${d.id}')">Выдал сегодня</button>`,
+    (accStart&&!d.access_closed)?`<button onclick="closeAccess('${d.id}')">Отметить закрытым</button>`:'',
+    d.access_closed?`<button onclick="reopenAccess('${d.id}')">Открыть заново</button>`:'',
+    accStart?`<button class="ghost" onclick="clearAccess('${d.id}')">Сбросить срок</button>`:''
+  ].join('');
+  const accSec=`<div class="sec"><h4>Доступ на ${TRIAL_DAYS} дней</h4>
+      <div class="anketa">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">${accBadge(ai)||'<span class="acc closed">нет отсчёта</span>'}<span>${accStateText(ai)}</span></div>
+        <div class="addrow" style="margin-top:0;align-items:center">
+          <label class="hint" style="display:flex;align-items:center;gap:6px">Выдан:&nbsp;<input type="date" id="accStart" value="${accStart}" onchange="setAccessStart('${d.id}',this.value)"></label>
+          ${accBtns}
+        </div>
+        ${accStart&&!d.access_closed?`<div class="hint" style="margin-top:8px">Доступ закрывать ${fmtRu(addDaysISO(accStart,TRIAL_DAYS))} (${addDaysISO(accStart,TRIAL_DAYS)}) — это ${TRIAL_DAYS}-й день после выдачи.</div>`:''}
+      </div>
+    </div>`;
   document.getElementById('modal').innerHTML=`
     <div class="top">
       <div><h2>${esc(d.name)}</h2><div class="contact">${esc(d.contact)||'контакт не указан'}</div></div>
@@ -279,6 +346,7 @@ function openDetail(id){
     </div>
     <div class="body">
       <div class="sec"><h4>Статус</h4><div class="statusbar">${sbtns}</div></div>
+      ${accSec}
       <div class="sec"><h4>Данные из анкеты</h4><div class="anketa">${anketa}<div class="row"><b>Важные фичи</b><span>${feats}</span></div></div></div>
       <div class="sec"><h4>Дневник по дням</h4>${logs}
         <div class="addrow">
@@ -304,7 +372,14 @@ function openDetail(id){
 function closeModal(){document.getElementById('overlay').classList.remove('open');openId=null;render();}
 function reopen(){if(openId)openDetail(openId);}
 
-function setStatus(id,s){const d=DATA.find(x=>x.id===id);d.status=s;saveTester(id);reopen();}
+function setStatus(id,s){const d=DATA.find(x=>x.id===id);d.status=s;
+  if(TRIAL_STATUSES.includes(s)&&!d.access_start&&!d.access_closed)d.access_start=todayISO();
+  saveTester(id);reopen();}
+function setAccessStart(id,v){const d=DATA.find(x=>x.id===id);d.access_start=v||'';if(v)d.access_closed=false;saveTester(id);reopen();}
+function grantToday(id){const d=DATA.find(x=>x.id===id);d.access_start=todayISO();d.access_closed=false;saveTester(id);reopen();}
+function closeAccess(id){const d=DATA.find(x=>x.id===id);d.access_closed=true;saveTester(id);reopen();}
+function reopenAccess(id){const d=DATA.find(x=>x.id===id);d.access_closed=false;if(!d.access_start)d.access_start=todayISO();saveTester(id);reopen();}
+function clearAccess(id){const d=DATA.find(x=>x.id===id);d.access_start='';d.access_closed=false;saveTester(id);reopen();}
 function setComment(id,v){const d=DATA.find(x=>x.id===id);d.comment=v;saveTester(id);}
 function addLog(id){const d=DATA.find(x=>x.id===id);const t=document.getElementById('logtext').value.trim();const dt=document.getElementById('logdate').value;
   if(!t)return; d.log=d.log||[]; d.log.push({date:dt||new Date().toISOString().slice(0,10),text:t}); saveTester(id);reopen();}
