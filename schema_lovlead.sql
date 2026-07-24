@@ -16,7 +16,15 @@ drop policy if exists "own rows" on public.lovlead_testers;
 create policy "own rows" on public.lovlead_testers
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
--- updated_at обновляется само (функция touch_updated_at уже создана в schema.sql)
+-- updated_at обновляется само. Функцию создаём прямо здесь (create or replace),
+-- чтобы этот скрипт можно было выполнять отдельно, не завися от schema.sql.
+create or replace function public.touch_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end $$;
+
 drop trigger if exists lovlead_testers_touch on public.lovlead_testers;
 create trigger lovlead_testers_touch before update on public.lovlead_testers
   for each row execute function public.touch_updated_at();
