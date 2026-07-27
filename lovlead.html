@@ -123,11 +123,9 @@ input[type=email]{font-family:inherit;font-size:13px;color:var(--text);
   <div class="spacer"></div>
   <button class="ghost" onclick="location.href='index.html'" title="Основной трекер каналов и соцсетей">← Основной трекер</button>
   <button class="ghost" onclick="addPerson()">+ Человек</button>
-  <button class="ghost" onclick="delAnon()" title="Удалить всех «Аноним …»">Удалить анонимов</button>
   <button class="ghost" onclick="doExport()">Экспорт JSON</button>
   <button class="ghost" onclick="document.getElementById('imp').click()" title="Перенос данных из старого трекера (localStorage) или из бэкапа">Импорт</button>
   <input type="file" id="imp" accept="application/json" style="display:none" onchange="doImport(event)">
-  <button class="ghost" onclick="resetSeed()" title="Загрузить заново всех из анкеты">Сброс к анкете</button>
   <button class="ghost" id="whoBtn" onclick="signOut()" title="Выйти"></button>
 </header>
 
@@ -277,7 +275,7 @@ function render(){
   if(filter==='__expired__') list=DATA.filter(d=>accessInfo(d).state==='expired');
   else list=DATA.filter(d=>(!filter||d.status===filter));
   if(q)list=list.filter(d=>((d.name+' '+d.niche+' '+d.contact+' '+d.role).toLowerCase().includes(q)));
-  if(!list.length){grid.innerHTML=`<div class="empty">Пусто. ${DATA.length?'Смени фильтр или поиск.':'Нажми «Сброс к анкете», чтобы загрузить людей.'}</div>`;return;}
+  if(!list.length){grid.innerHTML=`<div class="empty">Пусто. ${DATA.length?'Смени фильтр или поиск.':'Добавь людей кнопкой «+ Человек».'}</div>`;return;}
   grid.innerHTML=list.map(d=>{
     const c=colorOf(d.status);
     const ai=accessInfo(d);
