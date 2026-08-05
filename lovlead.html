@@ -8,11 +8,13 @@
 :root{
   --bg:#f4f5f7; --panel:#ffffff; --panel2:#fafbfc; --line:#e4e7ec; --line2:#eef0f3;
   --text:#1a1d23; --muted:#6b7280; --accent:#2563eb; --accent-soft:#e8f0fe;
+  --money:#0f766e; --money-soft:#d9f2ee;
   --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
 }
 @media (prefers-color-scheme:dark){
   :root{--bg:#0f1115;--panel:#171a21;--panel2:#1c2029;--line:#262b34;--line2:#20242d;
-  --text:#e7eaef;--muted:#9aa2ad;--accent:#5b8cff;--accent-soft:#1b2740;--shadow:none;}
+  --text:#e7eaef;--muted:#9aa2ad;--accent:#5b8cff;--accent-soft:#1b2740;
+  --money:#2dd4bf;--money-soft:#14312d;--shadow:none;}
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -112,7 +114,54 @@ input[type=email]{font-family:inherit;font-size:13px;color:var(--text);
 .login h1{font-size:20px;margin:0 0 6px}
 .login p{color:var(--muted);font-size:13.5px;margin:0 0 18px}
 .login input{margin-bottom:11px;text-align:center}
-@media(max-width:520px){.anketa .row{flex-direction:column;gap:0}.anketa .row b{min-width:0}}
+/* деньги */
+.hdr-money{font-size:13px;color:var(--muted);white-space:nowrap}
+.hdr-money b{color:var(--money);font-size:14px}
+.tag.paid{background:var(--money-soft);border-color:transparent;color:var(--money);font-weight:600}
+.money{color:var(--money);font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px;box-shadow:var(--shadow)}
+.stat .lab{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:5px}
+.stat .val{font-size:23px;font-weight:700;letter-spacing:-.4px;line-height:1.15}
+.stat .sub{font-size:12px;color:var(--muted);margin-top:3px}
+.panelbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+  box-shadow:var(--shadow);margin-bottom:16px}
+.panelbox .head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.panelbox h3{margin:0;font-size:14px}
+.panelbox .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.segmented{display:flex;gap:4px;margin-left:auto}
+.segmented button{padding:5px 10px;font-size:12px}
+.segmented button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.chart svg{width:100%;height:auto;display:block}
+.chart .grid-l{stroke:var(--line2)}
+.chart .axis-t{fill:var(--muted);font-size:11px}
+.chart .barfill{fill:var(--accent)}
+.chart g[data-tip]:hover .barfill{opacity:.78}
+.chart g[data-tip] .dot,.chart g[data-tip] .cross{opacity:0}
+.chart g[data-tip]:hover .dot,.chart g[data-tip]:hover .cross{opacity:1}
+.tip{position:fixed;pointer-events:none;z-index:60;background:var(--panel);border:1px solid var(--line);
+  border-radius:8px;padding:6px 9px;font-size:12px;box-shadow:0 6px 20px rgba(0,0,0,.2);white-space:nowrap;
+  opacity:0;transition:opacity .1s;left:0;top:0}
+.tip.show{opacity:1}
+.tip b{color:var(--money)}
+.rank{display:flex;flex-direction:column;gap:9px}
+.rank .r{display:grid;grid-template-columns:140px 1fr 96px;gap:10px;align-items:center;font-size:13px}
+.rank .who{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.rank .who:hover{color:var(--accent)}
+.rank .track{display:block;background:var(--panel2);border:1px solid var(--line2);border-radius:5px;height:10px;overflow:hidden}
+.rank .fill{display:block;height:100%;border-radius:5px;background:var(--accent);min-width:3px}
+.rank .amt{text-align:right}
+.ptable{width:100%;border-collapse:collapse;font-size:13px}
+.ptable th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
+  font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+.ptable td{padding:7px 8px;border-bottom:1px solid var(--line2);vertical-align:top}
+.ptable tr:last-child td{border-bottom:none}
+.ptable .lnk{color:var(--accent);cursor:pointer}
+.ptable td.num{text-align:right;white-space:nowrap}
+.tblwrap{overflow-x:auto}
+input.amt{max-width:120px}
+@media(max-width:520px){.anketa .row{flex-direction:column;gap:0}.anketa .row b{min-width:0}
+  .rank .r{grid-template-columns:96px 1fr 80px;font-size:12.5px}}
 </style>
 </head>
 <body>
@@ -121,6 +170,7 @@ input[type=email]{font-family:inherit;font-size:13px;color:var(--text);
   <div class="brand">lovlead<span>·</span>трекер тест-группы</div>
   <span class="saved" id="saved"></span>
   <div class="spacer"></div>
+  <span class="hdr-money" id="hdrMoney"></span>
   <button class="ghost" onclick="location.href='index.html'" title="Основной трекер каналов и соцсетей">← Основной трекер</button>
   <button class="ghost" onclick="addPerson()">+ Человек</button>
   <button class="ghost" onclick="doExport()">Экспорт JSON</button>
@@ -132,6 +182,7 @@ input[type=email]{font-family:inherit;font-size:13px;color:var(--text);
 <div class="wrap">
   <div class="tabs">
     <div class="tab active" data-view="people" onclick="setView('people')">Тестеры</div>
+    <div class="tab" data-view="money" onclick="setView('money')">Деньги</div>
     <div class="tab" data-view="questions" onclick="setView('questions')">Все вопросы</div>
     <div class="tab" data-view="improvements" onclick="setView('improvements')">Все доработки</div>
   </div>
@@ -146,6 +197,8 @@ input[type=email]{font-family:inherit;font-size:13px;color:var(--text);
 
   <div id="aggView" style="display:none"></div>
 </div>
+
+<div class="tip" id="tip"></div>
 
 <div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal" id="modal"></div>
@@ -174,8 +227,9 @@ const STATUSES = [
   {k:'Оплатил',c:'#0d9488'},
   {k:'Отказ',c:'#dc2626'},
 ];
+const MON=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 let sb=null, user=null;
-let DATA=[], filter=null, view='people', openId=null;
+let DATA=[], filter=null, view='people', openId=null, moneyMode=null;
 
 function flash(msg,isErr){
   const el=document.getElementById('saved');
@@ -204,6 +258,7 @@ async function loadAll(){
   const {data,error}=await sb.from('lovlead_testers').select('id,data').order('id');
   if(error)throw error;
   DATA=(data||[]).map(r=>r.data);
+  DATA.forEach(d=>{if(!Array.isArray(d.payments))d.payments=[];});
   /* первый вход: загрузить 28 человек из анкеты */
   if(!DATA.length){
     DATA=structuredClone(SEED);
@@ -211,7 +266,123 @@ async function loadAll(){
   }
 }
 function colorOf(s){const x=STATUSES.find(z=>z.k===s);return x?x.c:'#6b7280';}
-function esc(t){return (t||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
+function esc(t){return (t||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+
+/* ===== деньги ===== */
+function sumOf(d){return (d.payments||[]).reduce((s,p)=>s+(+p.amount||0),0);}
+function fmt(v){return new Intl.NumberFormat('ru-RU').format(Math.round(v))+' ₽';}
+function shortMoney(v){
+  if(v>=1e6)return (v/1e6).toFixed(v%1e6?1:0).replace('.',',')+' млн';
+  if(v>=1000)return (v/1000).toFixed(v%1000&&v<10000?1:0).replace('.',',')+' к';
+  return String(Math.round(v));
+}
+function parseAmount(s){const v=parseFloat(String(s).replace(/\s/g,'').replace(',','.'));return isFinite(v)?v:NaN;}
+function allPayments(){
+  const out=[];
+  DATA.forEach(d=>(d.payments||[]).forEach((p,i)=>out.push({
+    who:d.name,id:d.id,idx:i,date:p.date||'',amount:+p.amount||0,note:p.note||''})));
+  return out.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+}
+function labelOf(k,mode){
+  if(mode==='month'){const[y,m]=k.split('-');return MON[+m-1]+' '+y.slice(2);}
+  const[,m,d]=k.split('-');return +d+' '+MON[+m-1];
+}
+function dayKeys(from,to){const out=[];const d=new Date(from+'T00:00:00Z'),end=new Date(to+'T00:00:00Z');
+  while(d<=end&&out.length<400){out.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+1);}return out;}
+function monthKeys(from,to){const out=[];let[y,m]=from.split('-').map(Number);const[ey,em]=to.split('-').map(Number);
+  while((y<ey||(y===ey&&m<=em))&&out.length<120){out.push(y+'-'+String(m).padStart(2,'0'));if(++m>12){m=1;y++;}}return out;}
+function bucketize(pays){
+  const dates=pays.map(p=>p.date).filter(Boolean).sort();
+  if(!dates.length)return{mode:'day',keys:[],vals:[]};
+  const span=dayKeys(dates[0],dates[dates.length-1]).length;
+  const mode = moneyMode || (span>45?'month':'day');
+  const keys = mode==='month'
+    ? monthKeys(dates[0].slice(0,7),dates[dates.length-1].slice(0,7))
+    : dayKeys(dates[0],dates[dates.length-1]);
+  const map=new Map(keys.map(k=>[k,0]));
+  pays.forEach(p=>{const k=mode==='month'?p.date.slice(0,7):p.date;if(map.has(k))map.set(k,map.get(k)+p.amount);});
+  return{mode,keys,vals:keys.map(k=>map.get(k))};
+}
+function niceMax(v){
+  if(!(v>0))return{top:1000,ticks:5};
+  const p=Math.pow(10,Math.floor(Math.log10(v))),n=v/p;
+  const s=n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10;
+  return{top:s*p,ticks:s===2?4:5};        // чтобы деления оси были круглыми
+}
+function yAxis(max,H,padT,padB){
+  const{top,ticks}=niceMax(max),out=[];
+  for(let i=0;i<=ticks;i++){const v=top*i/ticks;out.push({v,y:H-padB-(H-padT-padB)*(i/ticks)});}
+  return{top,out};
+}
+/* столбцы: сколько пришло за период */
+function barChart(keys,vals,mode){
+  if(!keys.length)return '<div class="hint">Пока нет оплат — добавь первую ниже или в карточке тестера.</div>';
+  const W=900,H=250,padL=58,padR=8,padT=14,padB=30,iw=W-padL-padR,ih=H-padT-padB;
+  const {top,out}=yAxis(Math.max(...vals),H,padT,padB);
+  const slot=iw/keys.length, bw=Math.max(2,Math.min(slot-2,56));
+  const step=Math.ceil(keys.length/12);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Доход по периодам">`;
+  out.forEach(t=>{s+=`<line class="grid-l" x1="${padL}" y1="${t.y.toFixed(1)}" x2="${W-padR}" y2="${t.y.toFixed(1)}"/>`
+    +`<text class="axis-t" x="${padL-8}" y="${(t.y+4).toFixed(1)}" text-anchor="end">${shortMoney(t.v)}</text>`;});
+  keys.forEach((k,i)=>{
+    const cx=padL+slot*i+slot/2, x=cx-bw/2;
+    const h=top?ih*vals[i]/top:0, y=H-padB-h, r=Math.min(4,bw/2,h);
+    const bar=h>0?`<path class="barfill" d="M${x},${H-padB} L${x},${(y+r).toFixed(1)} Q${x},${y.toFixed(1)} ${(x+r).toFixed(1)},${y.toFixed(1)} L${(x+bw-r).toFixed(1)},${y.toFixed(1)} Q${(x+bw).toFixed(1)},${y.toFixed(1)} ${(x+bw).toFixed(1)},${(y+r).toFixed(1)} L${(x+bw).toFixed(1)},${H-padB} Z"/>`:'';
+    s+=`<g data-tip="${esc(labelOf(k,mode))} · <b>${esc(fmt(vals[i]))}</b>">`
+      +`<rect x="${(cx-slot/2).toFixed(1)}" y="${padT}" width="${slot.toFixed(1)}" height="${ih}" fill="transparent"/>`
+      +bar+`</g>`;
+    if(i%step===0||i===keys.length-1)
+      s+=`<text class="axis-t" x="${cx.toFixed(1)}" y="${H-padB+17}" text-anchor="middle">${esc(labelOf(k,mode))}</text>`;
+  });
+  s+=`<line class="grid-l" x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}"/></svg>`;
+  return s;
+}
+/* линия: накопленным итогом */
+function cumChart(keys,vals,mode){
+  if(!keys.length)return '';
+  const W=900,H=200,padL=58,padR=8,padT=14,padB=30,iw=W-padL-padR,ih=H-padT-padB;
+  let acc=0; const cum=vals.map(v=>acc+=v);
+  const {top,out}=yAxis(cum[cum.length-1],H,padT,padB);
+  const X=i=>keys.length===1?padL+iw/2:padL+iw*i/(keys.length-1);
+  const Y=v=>H-padB-(top?ih*v/top:0);
+  const pts=cum.map((v,i)=>[X(i),Y(v)]);
+  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const step=Math.ceil(keys.length/12);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Доход накопленным итогом">`;
+  out.forEach(t=>{s+=`<line class="grid-l" x1="${padL}" y1="${t.y.toFixed(1)}" x2="${W-padR}" y2="${t.y.toFixed(1)}"/>`
+    +`<text class="axis-t" x="${padL-8}" y="${(t.y+4).toFixed(1)}" text-anchor="end">${shortMoney(t.v)}</text>`;});
+  s+=`<path d="${line} L${pts[pts.length-1][0].toFixed(1)},${H-padB} L${pts[0][0].toFixed(1)},${H-padB} Z" fill="var(--accent)" opacity=".12"/>`
+    +`<path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const slot=keys.length>1?iw/(keys.length-1):iw;
+  keys.forEach((k,i)=>{
+    const [x,y]=pts[i];
+    s+=`<g data-tip="${esc(labelOf(k,mode))} · всего <b>${esc(fmt(cum[i]))}</b>">`
+      +`<rect x="${(x-slot/2).toFixed(1)}" y="${padT}" width="${slot.toFixed(1)}" height="${ih}" fill="transparent"/>`
+      +`<line class="cross" x1="${x.toFixed(1)}" y1="${padT}" x2="${x.toFixed(1)}" y2="${H-padB}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>`
+      +`<circle class="dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="var(--accent)" stroke="var(--panel)" stroke-width="2"/></g>`;
+    if(i%step===0||i===keys.length-1){
+      const anc=i===0?'start':i===keys.length-1?'end':'middle';
+      s+=`<text class="axis-t" x="${x.toFixed(1)}" y="${H-padB+17}" text-anchor="${anc}">${esc(labelOf(k,mode))}</text>`;
+    }
+  });
+  s+=`<line class="grid-l" x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}"/></svg>`;
+  return s;
+}
+function bindTips(){
+  const tip=document.getElementById('tip');
+  document.querySelectorAll('.chart').forEach(el=>{
+    el.onmousemove=e=>{
+      const g=e.target.closest('g[data-tip]');
+      if(!g){tip.classList.remove('show');return;}
+      tip.innerHTML=g.getAttribute('data-tip');tip.classList.add('show');
+      tip.style.left=Math.max(8,Math.min(window.innerWidth-tip.offsetWidth-8,e.clientX+14))+'px';
+      tip.style.top=Math.max(8,e.clientY-tip.offsetHeight-12)+'px';
+    };
+    el.onmouseleave=()=>tip.classList.remove('show');
+  });
+}
+function setMoneyMode(m){moneyMode=m;render();}
+function plural(n,a,b,c){const n1=n%10,n2=n%100;return n2>=11&&n2<=14?c:n1===1?a:n1>=2&&n1<=4?b:c;}
 
 /* ===== доступ на 7 дней ===== */
 const TRIAL_DAYS=7;
@@ -268,6 +439,9 @@ function setFilter(f){filter=f;render();}
 
 function render(){
   renderChips();
+  const tot=DATA.reduce((s,d)=>s+sumOf(d),0);
+  document.getElementById('hdrMoney').innerHTML = tot?`Доход: <b>${esc(fmt(tot))}</b>`:'';
+  if(view==='money'){renderMoney();return;}
   if(view!=='people'){renderAgg();return;}
   const q=(document.getElementById('search').value||'').toLowerCase();
   const grid=document.getElementById('grid');
@@ -280,7 +454,9 @@ function render(){
     const c=colorOf(d.status);
     const ai=accessInfo(d);
     const stripeC=ai.state==='expired'?'#dc2626':c;
-    const feats=(d.features||[]).slice(0,3).map(f=>`<span class="tag">${esc(f)}</span>`).join('');
+    const ps=sumOf(d);
+    const feats=(ps?`<span class="tag paid">💰 ${esc(fmt(ps))}</span>`:'')
+      +(d.features||[]).slice(0,3).map(f=>`<span class="tag">${esc(f)}</span>`).join('');
     return `<div class="card" onclick="openDetail('${d.id}')">
       <div class="stripe" style="background:${stripeC}"></div>
       <h3>${esc(d.name)}</h3>
@@ -293,6 +469,96 @@ function render(){
         <span class="act-count">${d.log&&d.log.length?('📅 '+d.log.length):''} ${d.questions&&d.questions.length?('❓ '+d.questions.length):''} ${d.improvements&&d.improvements.length?('🛠 '+d.improvements.length):''}</span>
       </div>
     </div>`;}).join('');
+}
+
+function renderMoney(){
+  const box=document.getElementById('aggView');
+  const pays=allPayments();
+  const total=pays.reduce((s,p)=>s+p.amount,0);
+  const ym=todayISO().slice(0,7);
+  const monthSum=pays.filter(p=>p.date.slice(0,7)===ym).reduce((s,p)=>s+p.amount,0);
+  const payers=[...new Set(pays.map(p=>p.id))].length;
+  const {mode,keys,vals}=bucketize(pays);
+
+  const stats=`<div class="stats">
+    <div class="stat"><div class="lab">Всего пришло</div><div class="val money">${esc(fmt(total))}</div>
+      <div class="sub">${pays.length} ${plural(pays.length,'платёж','платежа','платежей')}</div></div>
+    <div class="stat"><div class="lab">В этом месяце</div><div class="val">${esc(fmt(monthSum))}</div>
+      <div class="sub">${esc(MON[+ym.slice(5)-1])} ${ym.slice(0,4)}</div></div>
+    <div class="stat"><div class="lab">Платящих</div><div class="val">${payers}</div>
+      <div class="sub">из ${DATA.length} в трекере</div></div>
+    <div class="stat"><div class="lab">Средний на клиента</div><div class="val">${esc(fmt(payers?total/payers:0))}</div>
+      <div class="sub">средний платёж ${esc(fmt(pays.length?total/pays.length:0))}</div></div>
+  </div>`;
+
+  const seg=`<div class="segmented">
+    <button class="${moneyMode?'':'on'}" onclick="setMoneyMode(null)">Авто</button>
+    <button class="${moneyMode==='day'?'on':''}" onclick="setMoneyMode('day')">По дням</button>
+    <button class="${moneyMode==='month'?'on':''}" onclick="setMoneyMode('month')">По месяцам</button>
+  </div>`;
+
+  const charts=`<div class="panelbox">
+      <div class="head"><div><h3>Приход ${mode==='month'?'по месяцам':'по дням'}</h3>
+        <div class="sub">Сколько денег пришло за каждый период</div></div>${seg}</div>
+      <div class="chart">${barChart(keys,vals,mode)}</div>
+    </div>`
+    + (keys.length>1?`<div class="panelbox">
+      <div class="head"><div><h3>Накопленным итогом</h3>
+        <div class="sub">Как рос общий доход с первой оплаты</div></div></div>
+      <div class="chart">${cumChart(keys,vals,mode)}</div>
+    </div>`:'');
+
+  const ranked=DATA.map(d=>({d,s:sumOf(d)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);
+  const maxR=ranked.length?ranked[0].s:1;
+  const rank=ranked.length?`<div class="panelbox">
+      <div class="head"><div><h3>Кто сколько принёс</h3>
+        <div class="sub">${ranked.length} ${plural(ranked.length,'клиент','клиента','клиентов')} с оплатами</div></div></div>
+      <div class="rank">${ranked.map(x=>`<div class="r">
+        <span class="who" onclick="openDetail('${x.d.id}')">${esc(x.d.name)}</span>
+        <span class="track"><span class="fill" style="width:${(x.s/maxR*100).toFixed(1)}%"></span></span>
+        <span class="amt money">${esc(fmt(x.s))}</span></div>`).join('')}</div>
+    </div>`:'';
+
+  const opts=DATA.map(d=>`<option value="${esc(d.id)}">${esc(d.name)}</option>`).join('');
+  const addForm=`<div class="panelbox">
+      <div class="head"><div><h3>Записать приход</h3>
+        <div class="sub">Или добавь оплату прямо в карточке тестера</div></div></div>
+      <div class="addrow">
+        <select id="mpwho">${opts}</select>
+        <input type="date" id="mpdate" value="${todayISO()}">
+        <input type="text" class="amt" id="mpamount" placeholder="Сумма, ₽" inputmode="decimal">
+        <input type="text" id="mpnote" placeholder="За что / комментарий">
+        <button class="primary" onclick="addPayFromMoney()">Добавить</button>
+      </div>
+    </div>`;
+
+  const rows=pays.slice().reverse().map(p=>`<tr>
+      <td>${esc(p.date)}</td>
+      <td class="lnk" onclick="openDetail('${p.id}')">${esc(p.who)}</td>
+      <td class="num money">${esc(fmt(p.amount))}</td>
+      <td>${esc(p.note)}</td>
+      <td class="num"><button class="del" onclick="delPay('${p.id}',${p.idx},true)">×</button></td>
+    </tr>`).join('');
+  const table=pays.length?`<div class="panelbox">
+      <div class="head"><div><h3>Все платежи</h3><div class="sub">Новые сверху</div></div></div>
+      <div class="tblwrap"><table class="ptable">
+        <tr><th>Дата</th><th>Кто</th><th style="text-align:right">Сумма</th><th>Комментарий</th><th></th></tr>
+        ${rows}
+      </table></div>
+    </div>`:'';
+
+  box.innerHTML=stats+charts+rank+addForm+table;
+  bindTips();
+}
+function addPayFromMoney(){
+  const id=document.getElementById('mpwho').value;
+  const v=parseAmount(document.getElementById('mpamount').value);
+  if(!(v>0)){alert('Впиши сумму больше нуля');return;}
+  const d=DATA.find(x=>x.id===id); if(!d)return;
+  d.payments=d.payments||[];
+  d.payments.push({date:document.getElementById('mpdate').value||todayISO(),amount:v,
+    note:document.getElementById('mpnote').value.trim()});
+  saveTester(id);render();
 }
 
 function renderAgg(){
@@ -320,6 +586,23 @@ function openDetail(id){
   const ql=(d.questions||[]).map((t,i)=>`<div class="listitem"><span class="txt">${esc(t)}</span><button class="del" onclick="delItem('${d.id}','questions',${i})">×</button></div>`).join('')||'<div class="hint">Вопросов нет.</div>';
   const il=(d.improvements||[]).map((t,i)=>`<div class="listitem"><span class="txt">${esc(t)}</span><button class="del" onclick="delItem('${d.id}','improvements',${i})">×</button></div>`).join('')||'<div class="hint">Доработок нет.</div>';
   const today=new Date().toISOString().slice(0,10);
+  const psum=sumOf(d);
+  const pl=(d.payments||[]).map((p,i)=>i).sort((a,b)=>((d.payments[a].date||'')<(d.payments[b].date||'')?1:-1))
+    .map(i=>{const p=d.payments[i];
+      return `<div class="logitem"><span class="date">${esc(p.date)}</span>
+        <span class="txt"><span class="money">${esc(fmt(p.amount))}</span>${p.note?' · '+esc(p.note):''}</span>
+        <button class="del" onclick="delPay('${d.id}',${i})">×</button></div>`;}).join('')
+    ||'<div class="hint">Оплат пока нет.</div>';
+  const paySec=`<div class="sec"><h4>Оплаты${psum?' — <span class="money">'+esc(fmt(psum))+'</span>':''}</h4>${pl}
+      <div class="addrow">
+        <input type="date" id="paydate" value="${today}">
+        <input type="text" class="amt" id="payamount" placeholder="Сумма, ₽" inputmode="decimal"
+          onkeydown="if(event.key==='Enter')addPay('${d.id}')">
+        <input type="text" id="paynote" placeholder="За что / комментарий"
+          onkeydown="if(event.key==='Enter')addPay('${d.id}')">
+        <button class="primary" onclick="addPay('${d.id}')">+ Приход</button>
+      </div>
+    </div>`;
   const ai=accessInfo(d);
   const accStart=d.access_start||'';
   const accBtns=[
@@ -347,6 +630,7 @@ function openDetail(id){
     <div class="body">
       <div class="sec"><h4>Статус</h4><div class="statusbar">${sbtns}</div></div>
       ${accSec}
+      ${paySec}
       <div class="sec"><h4>Данные из анкеты</h4><div class="anketa">${anketa}<div class="row"><b>Важные фичи</b><span>${feats}</span></div></div></div>
       <div class="sec"><h4>Дневник по дням</h4>${logs}
         <div class="addrow">
@@ -384,13 +668,22 @@ function setComment(id,v){const d=DATA.find(x=>x.id===id);d.comment=v;saveTester
 function addLog(id){const d=DATA.find(x=>x.id===id);const t=document.getElementById('logtext').value.trim();const dt=document.getElementById('logdate').value;
   if(!t)return; d.log=d.log||[]; d.log.push({date:dt||new Date().toISOString().slice(0,10),text:t}); saveTester(id);reopen();}
 function delLog(id,i){const d=DATA.find(x=>x.id===id);d.log.splice(i,1);saveTester(id);reopen();}
+function addPay(id){const d=DATA.find(x=>x.id===id);
+  const v=parseAmount(document.getElementById('payamount').value);
+  if(!(v>0)){alert('Впиши сумму больше нуля');return;}
+  d.payments=d.payments||[];
+  d.payments.push({date:document.getElementById('paydate').value||todayISO(),amount:v,
+    note:document.getElementById('paynote').value.trim()});
+  saveTester(id);reopen();}
+function delPay(id,i,fromMoney){const d=DATA.find(x=>x.id===id);if(!d||!d.payments)return;
+  d.payments.splice(i,1);saveTester(id); if(fromMoney)render(); else reopen();}
 function addItem(id,field,inputId){const d=DATA.find(x=>x.id===id);const el=document.getElementById(inputId);const t=el.value.trim();
   if(!t)return; d[field]=d[field]||[]; d[field].push(t); saveTester(id);reopen();}
 function delItem(id,field,i){const d=DATA.find(x=>x.id===id);d[field].splice(i,1);saveTester(id);reopen();}
 
 function addPerson(){const name=prompt('Имя нового человека:');if(!name)return;
   const id='n'+Date.now();
-  DATA.push({id,name,contact:'',role:'',niche:'',source:'',actuality:'',price_fr:'',price_st:'',price_ag:'',price_own:'',features:[],anketa_date:'',status:'Не приглашён',comment:'',log:[],questions:[],improvements:[]});
+  DATA.push({id,name,contact:'',role:'',niche:'',source:'',actuality:'',price_fr:'',price_st:'',price_ag:'',price_own:'',features:[],anketa_date:'',status:'Не приглашён',comment:'',log:[],questions:[],improvements:[],payments:[]});
   saveTester(id);render();openDetail(id);}
 
 async function delPerson(id){
