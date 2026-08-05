@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ФОТОМАНИЯ · трекер поездки</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#ffffff; --panel2:#fafbfc; --line:#e4e7ec; --line2:#eef0f3;
+  --text:#1a1d23; --muted:#6b7280; --accent:#2563eb; --accent-soft:#e8f0fe;
+  --up:#059669; --down:#dc2626; --warn:#b45309; --warn-soft:#fef3c7;
+  --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f1115;--panel:#171a21;--panel2:#1c2029;--line:#262b34;--line2:#20242d;
+  --text:#e7eaef;--muted:#9aa2ad;--accent:#5b8cff;--accent-soft:#1b2740;
+  --up:#34d399;--down:#f87171;--warn:#fbbf24;--warn-soft:#2a2410;--shadow:none;}
+}
+:root[data-theme="light"]{
+  --bg:#f4f5f7;--panel:#ffffff;--panel2:#fafbfc;--line:#e4e7ec;--line2:#eef0f3;
+  --text:#1a1d23;--muted:#6b7280;--accent:#2563eb;--accent-soft:#e8f0fe;
+  --up:#059669;--down:#dc2626;--warn:#b45309;--warn-soft:#fef3c7;
+  --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
+}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#171a21;--panel2:#1c2029;--line:#262b34;--line2:#20242d;
+  --text:#e7eaef;--muted:#9aa2ad;--accent:#5b8cff;--accent-soft:#1b2740;
+  --up:#34d399;--down:#f87171;--warn:#fbbf24;--warn-soft:#2a2410;--shadow:none;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
+header{position:sticky;top:0;z-index:20;background:var(--panel);border-bottom:1px solid var(--line);
+  padding:12px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:var(--shadow);}
+.brand{font-weight:700;font-size:16px;letter-spacing:.2px;margin-right:6px;white-space:nowrap;}
+.brand span{color:var(--accent)}
+.spacer{flex:1}
+button{font-family:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--text);
+  padding:7px 12px;border-radius:8px;cursor:pointer;transition:.12s;white-space:nowrap;}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.primary:hover{opacity:.9;color:#fff}
+button.ghost{background:transparent}
+button.mini{padding:4px 9px;font-size:12px;border-radius:7px}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 20px 70px;}
+input[type=text],input[type=date],input[type=number],textarea,select{font-family:inherit;font-size:13px;color:var(--text);
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+textarea{width:100%;resize:vertical;min-height:56px}
+input[type=email]{font-family:inherit;font-size:13px;color:var(--text);background:var(--panel);
+  border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+.saved{font-size:12px;color:var(--up);opacity:0;transition:.3s}
+.saved.show{opacity:1}
+.saved.err{color:var(--down);opacity:1}
+.hint{font-size:12px;color:var(--muted);margin:2px 0 0}
+
+/* дашборд */
+.dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px;box-shadow:var(--shadow)}
+.kpi .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600}
+.kpi .v{font-size:24px;font-weight:700;margin:4px 0 1px;line-height:1.15}
+.kpi .s{font-size:12px;color:var(--muted)}
+.kpi .v small{font-size:14px;font-weight:600;color:var(--muted)}
+.bar{height:6px;border-radius:4px;background:var(--line2);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:.25s}
+.bar i.ok{background:var(--up)}
+.bar i.warn{background:var(--warn)}
+.kpi.alert{border-color:var(--down)}
+.kpi.alert .v{color:var(--down)}
+.kpi.good .v{color:var(--up)}
+
+.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{padding:8px 14px;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);font-weight:600;
+  font-size:13.5px;white-space:nowrap}
+.tab.active{color:var(--accent);border-color:var(--accent)}
+
+/* фазы и задачи */
+.phase{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;
+  box-shadow:var(--shadow);overflow:hidden}
+.phase>.ph{display:flex;align-items:center;gap:10px;padding:13px 15px;cursor:pointer;user-select:none}
+.phase>.ph:hover{background:var(--panel2)}
+.phase .cnt{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.phase h3{margin:0;font-size:14.5px}
+.phase .when{font-size:12px;color:var(--muted);font-weight:600;padding:2px 8px;border-radius:6px;
+  background:var(--panel2);border:1px solid var(--line);white-space:nowrap}
+.phase .arrow{color:var(--muted);font-size:11px;width:12px}
+.phase .pbar{height:4px;background:var(--line2)}
+.phase .pbar i{display:block;height:100%;background:var(--up);transition:.25s}
+.phase .items{border-top:1px solid var(--line2);padding:4px 15px 12px}
+.phase.closed .items{display:none}
+.phase .lead{font-size:12.5px;color:var(--muted);padding:10px 0 2px;border-bottom:1px solid var(--line2);margin-bottom:2px}
+
+.task{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line2);align-items:flex-start}
+.task:last-child{border-bottom:none}
+.cb{flex:0 0 18px;width:18px;height:18px;margin-top:1px;border:1.5px solid var(--line);border-radius:5px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;background:var(--panel)}
+.cb:hover{border-color:var(--accent)}
+.cb.on{background:var(--up);border-color:var(--up)}
+.task .body{flex:1;min-width:0}
+.task .t{font-size:13.5px}
+.task.done .t{color:var(--muted);text-decoration:line-through}
+.task .why{font-size:12.5px;color:var(--muted);margin-top:3px}
+.task .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;align-items:center}
+.pill{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+.pill.crit{background:rgba(220,38,38,.14);color:var(--down)}
+.pill.fork{background:rgba(180,83,9,.15);color:var(--warn)}
+.pill.file{background:var(--panel2);border:1px solid var(--line);color:var(--muted);font-weight:500;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px}
+.pill.money{background:var(--accent-soft);color:var(--accent)}
+.task .note{margin-top:6px}
+.task .note textarea{min-height:34px;font-size:12.5px}
+.task .rt{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.task .dt{font-size:11px;color:var(--up);font-weight:600;white-space:nowrap}
+.nbtn{border:none;background:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 4px}
+.nbtn:hover{color:var(--accent)}
+.nbtn.has{color:var(--accent)}
+
+/* таблицы / журналы */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px;
+  box-shadow:var(--shadow);margin-bottom:12px}
+.panel h3{margin:0 0 4px;font-size:14.5px}
+.panel h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.addrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 4px}
+.addrow input[type=text]{flex:1;min-width:150px}
+.addrow input[type=number]{width:100px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
+  font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line2);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tblwrap{overflow-x:auto}
+.del{color:var(--muted);cursor:pointer;border:none;background:none;font-size:15px;padding:0 4px}
+.del:hover{color:var(--down)}
+.spark{display:flex;align-items:flex-end;gap:3px;height:56px;margin:12px 0 4px}
+.spark i{flex:1;background:var(--accent);border-radius:3px 3px 0 0;min-height:2px;opacity:.85;position:relative}
+.spark i.zero{background:var(--line)}
+.sparkx{display:flex;gap:3px;font-size:9.5px;color:var(--muted);text-align:center}
+.sparkx span{flex:1;overflow:hidden}
+.streak{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600}
+.streak.ok{background:rgba(5,150,105,.14);color:var(--up)}
+.streak.warn{background:rgba(180,83,9,.16);color:var(--warn)}
+.streak.bad{background:rgba(220,38,38,.16);color:var(--down)}
+.empty{text-align:center;color:var(--muted);padding:26px 0;font-size:13px}
+.empty2{text-align:center;color:var(--muted);padding:50px 0}
+.ref h4{margin-top:0}
+.ref p{margin:0 0 10px}
+.ref ul{margin:0 0 10px;padding-left:20px}
+.ref li{margin-bottom:4px}
+.ref code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+  background:var(--panel2);border:1px solid var(--line2);border-radius:5px;padding:1px 5px}
+.warnbox{background:var(--warn-soft);border:1px solid var(--warn);border-radius:10px;padding:11px 14px;
+  font-size:13px;margin-bottom:12px}
+.login{max-width:400px;margin:70px auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  padding:28px;box-shadow:var(--shadow);text-align:center}
+.login h1{font-size:20px;margin:0 0 6px}
+.login p{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+.login input{margin-bottom:11px;text-align:center}
+@media(max-width:560px){
+  .wrap{padding:14px 12px 60px}
+  header{padding:10px 12px}
+  .task .rt{display:none}
+}
+</style>
+</head>
+<body>
+<div id="app" style="display:none">
+<header>
+  <div class="brand">ФОТОМАНИЯ<span> · </span>поездка в Магадан</div>
+  <span class="saved" id="saved"></span>
+  <div class="spacer"></div>
+  <button class="ghost" onclick="location.href='index.html'" title="Основной трекер каналов и соцсетей">← Основной трекер</button>
+  <button class="ghost" onclick="doExport()">Экспорт JSON</button>
+  <button class="ghost" id="whoBtn" onclick="signOut()" title="Выйти"></button>
+</header>
+
+<div class="wrap">
+  <div class="dash" id="dash"></div>
+
+  <div class="tabs">
+    <div class="tab active" data-view="check" onclick="setView('check')">Чек-лист</div>
+    <div class="tab" data-view="scan" onclick="setView('scan')">Сканирование</div>
+    <div class="tab" data-view="rec" onclick="setView('rec')">Записи с дедом</div>
+    <div class="tab" data-view="ref" onclick="setView('ref')">Справка</div>
+  </div>
+
+  <div id="viewBox"></div>
+</div>
+</div>
+
+<div id="loginBox" class="login" style="display:none">
+  <h1>ФОТОМАНИЯ · трекер</h1>
+  <p>Вход по одноразовой ссылке на почту</p>
+  <input type="email" id="email" placeholder="почта" autocomplete="email">
+  <button class="primary" style="width:100%" onclick="sendLink()" id="loginBtn">Прислать ссылку</button>
+  <p id="loginMsg" style="margin-top:14px;margin-bottom:0"></p>
+</div>
+
+<div id="boot" class="empty2">Загрузка...</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+/* ==================== содержание плана ====================
+   Правки текста задач - здесь, в PHASES и TASKS. id менять нельзя:
+   по ним хранятся отметки. Новый пункт - просто новый id.        */
+
+const PHASES=[
+  {k:'p1',name:'Фундамент',when:'Дни 1–2',
+   lead:'Блокирует всё остальное. Пока не известно реальное оптическое разрешение сканера — нельзя запускать ни массовый скан, ни пилот.'},
+  {k:'p2',name:'Архив и права',when:'Дни 2–4',
+   lead:'Даёт порядок сканирования и юридическую основу. Без описи непонятно, что сканировать первым.'},
+  {k:'p3',name:'Пилот',when:'Дни 5–7',
+   lead:'Смысл — получить отказ Alamy сейчас, пока есть три недели на перенастройку. Дома этот отказ означает пересканирование всего архива.'},
+  {k:'p4',name:'Производство',when:'Недели 2–3',
+   lead:'Основной объём. Главная связка: сканируешь и записываешь одновременно — дед комментирует кадры по мере появления на экране.'},
+  {k:'p5',name:'Выход в город',when:'Неделя 3',
+   lead:'Только лично и только из Магадана. Письмо из другого города и живой разговор — разные вещи.'},
+  {k:'p6',name:'Закрепление',when:'Неделя 4',
+   lead:'Чтобы после отъезда проект не встал.'},
+  {k:'p7',name:'Уже дома',when:'После поездки',
+   lead:'Не тратить на это магаданское время — делается из любой точки.'},
+];
+
+const TASKS=[
+/* --- p1 --- */
+ {id:'a1',p:'p1',t:'Определить модель сканера',crit:1,fork:1,file:'TOOLS/3-определить-сканер.ps1',
+  why:'Развилка всего проекта. Заявленное разрешение почти никогда не равно оптическому: у Epson V500/V600 реальных ~1600–2300 dpi вместо заявленных 6400.'},
+ {id:'a2',p:'p1',t:'Установить софт сканера',
+  why:'Родной софт бесплатен и приемлем. Если это Nikon Coolscan — под Windows 10/11 родных драйверов нет, нужен VueScan, других вариантов не существует.'},
+ {id:'a3',p:'p1',t:'Купить: внешний HDD 4 ТБ',money:'7–10 тыс ₽',
+  why:'Блокирует копирование данных. 2000 кадров это 90–260 ГБ, диск закрывает архив с запасом на все копии.'},
+ {id:'a4',p:'p1',t:'Купить: груша, перчатки, микрофибра + изопропил 99%',money:'~1,5 тыс ₽',
+  why:'Груша блокирует любой качественный скан — сдувать пыль перед каждым кадром. Окупается в первый же час.'},
+ {id:'a5',p:'p1',t:'Выставить настройки сканирования один раз и правильно',crit:1,
+  why:'4000 dpi оптических, TIFF, 16/48 бит. Автоэкспозиция, автоцвет, шумодав, резкость — выключить. Полная таблица во вкладке «Справка».'},
+ {id:'a6',p:'p1',t:'Сделать 10–15 тестовых сканов, проверить на 100% увеличении',
+  why:'Пересканировать 2000 кадров из-за неверных настроек никто не будет.'},
+ {id:'a7',p:'p1',t:'Прогнать карту фото на компьютере деда',file:'TOOLS/1-карта-фото.ps1',
+  why:'Понять, что и где лежит, до того как копировать.'},
+ {id:'a8',p:'p1',t:'Проверить разрешение имеющихся сканов',fork:1,file:'TOOLS/2-качество-сканов.ps1',
+  why:'Вторая развилка: если там 1000 px — старые сканы бесполезны и всё придётся сканировать заново; если 3000+ — пилот можно запускать сразу.'},
+ {id:'a9',p:'p1',t:'Скопировать по USB: семейное + весь отсканированный архив',
+  why:'Ты на месте — значит никакого облака. 200 ГБ уезжают за пару часов вместо двух недель заливки через магаданский канал.'},
+ {id:'a10',p:'p1',t:'Сверить количество файлов и объём с картой',
+  why:'И ничего не удалять на компьютере деда. Дубликаты чистим дома.'},
+ {id:'a11',p:'p1',t:'Начать ежедневные записи на диктофон',crit:1,
+  why:'Единственный ресурс проекта, который убывает сам по себе. Негативы полежат ещё десять лет, память — нет. Отмечать во вкладке «Записи с дедом».'},
+/* --- p2 --- */
+ {id:'b1',p:'p2',t:'Разобрать негативы вместе с дедом',
+  why:'Он главный источник атрибуции: знает, где сильные кадры, а где брак.'},
+ {id:'b2',p:'p2',t:'Выделить повреждённые плёнки',crit:1,
+  why:'Грибок, слипание, уксусный запах. Деградируют необратимо — идут в скан первыми, вне зависимости от художественной ценности.'},
+ {id:'b3',p:'p2',t:'Заполнить опись хотя бы вчерне',file:'05_CATALOG/inventory.csv',
+  why:'Без списка непонятно, что сканировать первым. Порядок здесь важнее скорости.'},
+ {id:'b4',p:'p2',t:'Сфотографировать журналы съёмок и подписи на конвертах',
+  why:'Телефона достаточно. Это исходник атрибуции — даты, места, фамилии.'},
+ {id:'b5',p:'p2',t:'Подготовить текст лицензионного договора',crit:1,file:'06_LEGAL/',
+  why:'Папка 06_LEGAL пустая, текста нет, а подписывать надо на первой неделе. Нужно право сублицензирования — иначе Alamy и музеи невозможны.'},
+ {id:'b6',p:'p2',t:'Подписать договор с дедом',crit:1,
+  why:'Пока вы в одном городе: бумага и две подписи. Удалённо это почта, сканы и месяц переписки.'},
+/* --- p3 --- */
+ {id:'c1',p:'p3',t:'Отсканировать первые 100 кадров, замерить реальную скорость',
+  why:'Расчётные полторы минуты на кадр надо проверить фактом. От этого зависит, реально ли закрыть архив за поездку.'},
+ {id:'c2',p:'p3',t:'Обработать 20 лучших до готового состояния',
+  why:'Именно готовых — с инверсией, чисткой и метаданными. На них Alamy и будет судить.'},
+ {id:'c3',p:'p3',t:'Зарегистрироваться на Alamy',
+  why:'Порог полноценного приёма — около 17 Мп. 4000 dpi дают 21 Мп, 3200 dpi — только 13,7 Мп.'},
+ {id:'c4',p:'p3',t:'Пройти проверку качества Alamy',crit:1,fork:1,
+  why:'Точка, после которой либо запускается производство, либо переделываются настройки. Узнать об отказе дома — значит потерять всё.'},
+ {id:'c5',p:'p3',t:'Загрузить первую партию',
+  why:'Первые деньги в перспективе к концу первой недели.'},
+/* --- p4 --- */
+ {id:'d1',p:'p4',t:'Скан: повреждённые плёнки',
+  why:'Первый приоритет очереди — они необратимо деградируют.'},
+ {id:'d2',p:'p4',t:'Скан: отобранное дедом лучшее',
+  why:'Второй приоритет. Кадры, которые он сам считает сильными, — это и есть будущая выставка.'},
+ {id:'d3',p:'p4',t:'Скан: всё остальное в фоновом режиме',
+  why:'Третий приоритет, идёт до конца поездки и после неё руками деда.'},
+ {id:'d4',p:'p4',t:'Сканировать и записывать одновременно',crit:1,
+  why:'Самая эффективная связка проекта. Дед видит изображение на экране и вспоминает больше, чем при разговоре по памяти: место, год, имена, повод. Одним действием закрываются оцифровка и атрибуция.'},
+ {id:'d5',p:'p4',t:'Вечером переносить услышанное в каталог',file:'05_CATALOG/catalog.csv',
+  why:'Пока свежо. Атрибуция потом умножает цену каждого кадра.'},
+ {id:'d6',p:'p4',t:'Снять видео: дед в студии, за сканером, с негативами',
+  why:'Основа канала, заявки на выставку, разговора с музеем и материала для СМИ. Телефон, дневной свет от окна, стопка книг вместо штатива. Стоит ноль рублей и снимается только здесь.'},
+ {id:'d7',p:'p4',t:'Напечатать тестовую партию отпечатков, оценить бумагу',
+  why:'Принтеры в студии есть. Понять качество до того, как принты пойдут в продажу.'},
+ {id:'d8',p:'p4',t:'Подписать запас листов впрок',
+  why:'Пока он рядом. Потом останется только допечатывать по мере продаж — подпись автора удалённо не поставишь.'},
+/* --- p5 --- */
+ {id:'e1',p:'p5',t:'Краеведческий музей: прийти, показать материал на ноутбуке',
+  why:'Предлагать не продажу, а совместную выставку: их площадка и статус, ваш архив и живой автор. Музеи такое берут охотно — им нужны местные истории.'},
+ {id:'e2',p:'p5',t:'Местные СМИ и паблики',
+  why:'«Магаданский фотограф полвека снимал город и оцифровывает архив» — готовый сюжет, от которого не отказываются. Узнаваемость конвертируется в лицензии и заказы.'},
+ {id:'e3',p:'p5',t:'Съёмка «тогда и сейчас»',crit:1,
+  why:'Два десятка старых городских кадров, те же точки и ракурсы сегодня. Сильнейший формат: соцсети, выставка, книга. Снять можно только находясь в городе, дед подскажет точки.'},
+ {id:'e4',p:'p5',t:'Министерство культуры области: субсидии и сроки конкурсов',
+  why:'Живой контакт стоит десяти писем.'},
+ {id:'e5',p:'p5',t:'Спросить в музее, кто у них занимается грантами',
+  why:'Заодно, тем же визитом.'},
+/* --- p6 --- */
+ {id:'f1',p:'p6',t:'Настроить Syncthing между компьютерами',crit:1,
+  why:'Дед кладёт готовые файлы в папку — они сами приезжают к тебе. Никаких флешек и «залей на диск».'},
+ {id:'f2',p:'p6',t:'Поставить RustDesk с постоянным паролем, проверить подключение',crit:1,
+  why:'Обязательно постоянный пароль в настройках, иначе после каждого перезапуска он меняется. Это твой канал доступа на весь следующий год.'},
+ {id:'f3',p:'p6',t:'Пройти цикл сканирования вместе с дедом несколько раз',
+  why:'Самое ценное действие поездки после записей. Он профессионал и остаётся с техникой — дальше архив сканируется без тебя.'},
+ {id:'f4',p:'p6',t:'Оставить у сканера бумажную инструкцию его словами',file:'TOOLS/инструкция-для-деда.md',
+  why:'Именно его словами, а не твоими. Записать во время совместного прохода.'},
+ {id:'f5',p:'p6',t:'Договориться о темпе: 20–30 кадров в день',
+  why:'Без напряжения это 600–900 кадров в месяц — весь остаток архива за три-четыре месяца без твоего участия.'},
+ {id:'f6',p:'p6',t:'Полный бэкап на два диска, один увезти с собой',crit:1,
+  why:'Данные в трёх копиях, одна физически в другом городе. Смысл всего проекта — сохранить архив.'},
+ {id:'f7',p:'p6',t:'Запустить Telegram-канал первыми постами',
+  why:'Пока дед рядом и может комментировать.'},
+ {id:'f8',p:'p6',t:'Финальные записи: биография, истории, всё что не успели',
+  why:'Последний день — это последний день доступа к автору вживую.'},
+/* --- p7 --- */
+ {id:'g1',p:'p7',t:'Обработка и инверсия сканов'},
+ {id:'g2',p:'p7',t:'Метаданные, ключевые слова, английские описания'},
+ {id:'g3',p:'p7',t:'Загрузка на Alamy и остальные площадки',
+  why:'Приоритет каналов: Alamy → прямые продажи (музей, СМИ, издательства) → принты → Telegram/Дзен → микростоки последними.'},
+ {id:'g4',p:'p7',t:'Дедупликация семейного архива',file:'08_FAMILY/'},
+ {id:'g5',p:'p7',t:'Переписка с издательствами, документалистами, агентствами'},
+ {id:'g6',p:'p7',t:'Оформление грантовых заявок'},
+ {id:'g7',p:'p7',t:'Ведение канала на материале, снятом в поездке'},
+];
+
+const DEFAULT_STATE={
+  trip:{start:'2026-08-01',end:'2026-09-01',goal:2000},
+  tasks:{},   /* id -> {done:1, date:'ISO', note:''} */
+  scans:[],   /* {d, n, note} */
+  recs:[],    /* {d, topic, mins, cloud} */
+  ui:{closed:{}}
+};
+
+/* ==================== состояние и сохранение ==================== */
+let sb=null,user=null,view='check';
+let S=structuredClone(DEFAULT_STATE);
+
+function flash(msg,isErr){
+  const el=document.getElementById('saved');
+  el.textContent=msg;
+  el.className='saved show'+(isErr?' err':'');
+  if(!isErr)setTimeout(()=>{el.className='saved';},1600);
+}
+let saveTimer=null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    const {error}=await sb.from('photomania_state').upsert(
+      {user_id:user.id,data:S},{onConflict:'user_id'});
+    if(error)flash('не сохранилось: '+error.message,true);else flash('сохранено');
+  },400);
+}
+async function loadState(){
+  const {data,error}=await sb.from('photomania_state').select('data').eq('user_id',user.id).maybeSingle();
+  if(error)throw error;
+  if(data&&data.data)S=Object.assign(structuredClone(DEFAULT_STATE),data.data);
+  if(!S.ui)S.ui={closed:{}};
+  if(!S.ui.closed)S.ui.closed={};
+}
+
+/* ==================== даты ==================== */
+function todayISO(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
+function dayStart(iso){return new Date(iso+'T00:00:00');}
+function daysBetween(a,b){return Math.round((dayStart(b)-dayStart(a))/86400000);}
+function addDaysISO(iso,n){const d=dayStart(iso);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+function fmtRu(iso){if(!iso)return '';return dayStart(iso).toLocaleDateString('ru-RU',{day:'numeric',month:'short'});}
+function esc(t){return (t||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+function plural(n,a,b,c){const m=n%100;if(m>=11&&m<=14)return c;const k=n%10;return k===1?a:(k>=2&&k<=4?b:c);}
+
+/* ==================== дашборд ==================== */
+function scanTotal(){return S.scans.reduce((s,x)=>s+(+x.n||0),0);}
+function lastRecDate(){return S.recs.length?S.recs.map(r=>r.d).sort().slice(-1)[0]:null;}
+
+function renderDash(){
+  const t=todayISO(),tr=S.trip;
+  const total=TASKS.length, done=TASKS.filter(x=>S.tasks[x.id]&&S.tasks[x.id].done).length;
+  const tripLen=Math.max(daysBetween(tr.start,tr.end),1);
+  const elapsed=daysBetween(tr.start,t);
+  const dayNum=Math.min(Math.max(elapsed+1,1),tripLen);
+  const left=daysBetween(t,tr.end);
+
+  let tripV,tripS,tripPct;
+  if(elapsed<0){tripV='до отъезда '+(-elapsed);tripS='поездка ещё не началась';tripPct=0;}
+  else if(left<0){tripV='поездка закрыта';tripS='вернулся '+fmtRu(tr.end);tripPct=100;}
+  else{tripV='День '+dayNum+' <small>из '+tripLen+'</small>';
+       tripS='осталось '+left+' '+plural(left,'день','дня','дней');tripPct=dayNum/tripLen*100;}
+
+  const st=scanTotal(),goal=+tr.goal||2000;
+  const days=[...new Set(S.scans.filter(x=>+x.n>0).map(x=>x.d))].length;
+  const pace=days?Math.round(st/days):0;
+  const rest=Math.max(goal-st,0);
+  const eta=pace?Math.ceil(rest/pace):null;
+  const scanS=!st?'ни одного кадра':(rest===0?'цель закрыта':
+    (pace?'темп '+pace+'/день · остаток ~'+eta+' '+plural(eta,'день','дня','дней'):''));
+
+  const lr=lastRecDate();
+  const gap=lr?daysBetween(lr,t):null;
+  let recCls='',recV,recS;
+  if(!lr){recCls='alert';recV='0';recS='ни одной записи — это первый приоритет';}
+  else{recV=S.recs.length;
+    if(gap===0){recCls='good';recS='сегодня записано';}
+    else if(gap===1){recS='вчера · сегодня ещё нет';}
+    else{recCls='alert';recS='последняя '+gap+' '+plural(gap,'день','дня','дней')+' назад';}}
+
+  document.getElementById('dash').innerHTML=`
+   <div class="kpi"><div class="k">Поездка</div><div class="v">${tripV}</div><div class="s">${tripS}</div>
+     <div class="bar"><i style="width:${tripPct}%"></i></div></div>
+   <div class="kpi"><div class="k">Чек-лист</div><div class="v">${done} <small>из ${total}</small></div>
+     <div class="s">${Math.round(done/total*100)}% пунктов закрыто</div>
+     <div class="bar"><i class="ok" style="width:${done/total*100}%"></i></div></div>
+   <div class="kpi"><div class="k">Отсканировано</div><div class="v">${st.toLocaleString('ru-RU')} <small>из ${goal.toLocaleString('ru-RU')}</small></div>
+     <div class="s">${scanS}</div>
+     <div class="bar"><i style="width:${Math.min(st/goal*100,100)}%"></i></div></div>
+   <div class="kpi ${recCls}"><div class="k">Записи с дедом</div><div class="v">${recV}</div><div class="s">${recS}</div></div>`;
+}
+
+/* ==================== вкладка «Чек-лист» ==================== */
+function toggleTask(id){
+  const cur=S.tasks[id]||{};
+  if(cur.done){cur.done=0;cur.date='';}
+  else{cur.done=1;cur.date=todayISO();}
+  S.tasks[id]=cur;save();render();
+}
+function toggleNote(id){
+  const el=document.getElementById('note-'+id);
+  if(!el)return;
+  const show=el.style.display==='none';
+  el.style.display=show?'':'none';
+  if(show)el.querySelector('textarea').focus();
+}
+function setNote(id,v){
+  const cur=S.tasks[id]||{};cur.note=v;S.tasks[id]=cur;save();
+  const b=document.getElementById('nb-'+id);if(b)b.className='nbtn'+(v?' has':'');
+}
+function togglePhase(k){
+  S.ui.closed[k]=!S.ui.closed[k];save();render();
+}
+function viewCheck(){
+  let h='';
+  for(const ph of PHASES){
+    const items=TASKS.filter(x=>x.p===ph.k);
+    const done=items.filter(x=>S.tasks[x.id]&&S.tasks[x.id].done).length;
+    const closed=!!S.ui.closed[ph.k];
+    h+=`<div class="phase ${closed?'closed':''}">
+      <div class="ph" onclick="togglePhase('${ph.k}')">
+        <span class="arrow">${closed?'▶':'▼'}</span>
+        <span class="when">${ph.when}</span>
+        <h3>${esc(ph.name)}</h3>
+        <span class="cnt">${done} / ${items.length}</span>
+      </div>
+      <div class="pbar"><i style="width:${items.length?done/items.length*100:0}%"></i></div>
+      <div class="items">
+        ${ph.lead?`<div class="lead">${esc(ph.lead)}</div>`:''}`;
+    for(const x of items){
+      const st=S.tasks[x.id]||{};
+      const tags=[
+        x.crit?'<span class="pill crit">критично</span>':'',
+        x.fork?'<span class="pill fork">развилка</span>':'',
+        x.money?`<span class="pill money">${esc(x.money)}</span>`:'',
+        x.file?`<span class="pill file">${esc(x.file)}</span>`:'',
+      ].filter(Boolean).join('');
+      h+=`<div class="task ${st.done?'done':''}">
+        <div class="cb ${st.done?'on':''}" onclick="toggleTask('${x.id}')">${st.done?'✓':''}</div>
+        <div class="body">
+          <div class="t">${esc(x.t)}</div>
+          ${x.why?`<div class="why">${esc(x.why)}</div>`:''}
+          ${tags?`<div class="tags">${tags}</div>`:''}
+          <div class="note" id="note-${x.id}" style="display:${st.note?'':'none'}">
+            <textarea placeholder="заметка: что вышло, что мешает…"
+              oninput="setNote('${x.id}',this.value)">${esc(st.note||'')}</textarea>
+          </div>
+        </div>
+        <div class="rt">
+          ${st.done&&st.date?`<span class="dt">${fmtRu(st.date)}</span>`:''}
+          <button class="nbtn${st.note?' has':''}" id="nb-${x.id}" onclick="toggleNote('${x.id}')" title="Заметка">✎</button>
+        </div>
+      </div>`;
+    }
+    h+='</div></div>';
+  }
+  h+=`<div class="panel"><h4>Даты поездки и цель</h4>
+    <div class="addrow">
+      <label class="hint">выезд</label><input type="date" value="${S.trip.start}" onchange="S.trip.start=this.value;save();render()">
+      <label class="hint">возвращение</label><input type="date" value="${S.trip.end}" onchange="S.trip.end=this.value;save();render()">
+      <label class="hint">цель, кадров</label><input type="number" min="1" value="${S.trip.goal}" onchange="S.trip.goal=+this.value||2000;save();render()">
+    </div>
+    <p class="hint">От этих дат считается «день N из M» и прогноз по сканированию.</p></div>`;
+  return h;
+}
+
+/* ==================== вкладка «Сканирование» ==================== */
+function addScan(){
+  const d=document.getElementById('sd').value||todayISO();
+  const n=+document.getElementById('sn').value||0;
+  const note=document.getElementById('snote').value.trim();
+  if(!n){flash('впиши количество кадров',true);return;}
+  const ex=S.scans.find(x=>x.d===d);
+  if(ex){ex.n=(+ex.n||0)+n;if(note)ex.note=(ex.note?ex.note+'; ':'')+note;}
+  else S.scans.push({d,n,note});
+  S.scans.sort((a,b)=>a.d<b.d?1:-1);
+  save();render();
+}
+function delScan(d){S.scans=S.scans.filter(x=>x.d!==d);save();render();}
+function viewScan(){
+  const t=todayISO();
+  const total=scanTotal(),goal=+S.trip.goal||2000;
+  const today=S.scans.filter(x=>x.d===t).reduce((s,x)=>s+(+x.n||0),0);
+  /* последние 14 дней */
+  const bars=[];for(let i=13;i>=0;i--){const d=addDaysISO(t,-i);
+    bars.push({d,n:S.scans.filter(x=>x.d===d).reduce((s,x)=>s+(+x.n||0),0)});}
+  const mx=Math.max(...bars.map(b=>b.n),1);
+  let h=`<div class="panel">
+    <h3>Внести за день</h3>
+    <p class="hint">Расчёт из плана: ч/б полосками по 6 кадров без ICE — примерно полторы минуты на кадр. Пять часов в день дают 150–200 кадров.</p>
+    <div class="addrow">
+      <input type="date" id="sd" value="${t}">
+      <input type="number" id="sn" min="1" placeholder="кадров">
+      <input type="text" id="snote" placeholder="что за плёнки, что мешало…">
+      <button class="primary" onclick="addScan()">Записать</button>
+    </div>
+    <p class="hint">Сегодня уже внесено: <b>${today}</b> ${plural(today,'кадр','кадра','кадров')}. Повторная запись за ту же дату прибавляется к ней.</p>
+    <div class="spark">${bars.map(b=>`<i class="${b.n?'':'zero'}" style="height:${b.n?Math.max(b.n/mx*100,4):2}%" title="${fmtRu(b.d)}: ${b.n}"></i>`).join('')}</div>
+    <div class="sparkx">${bars.map(b=>`<span>${b.d.slice(8)}</span>`).join('')}</div>
+    <p class="hint">Последние 14 дней. Всего <b>${total.toLocaleString('ru-RU')}</b> из ${goal.toLocaleString('ru-RU')}.</p>
+  </div>`;
+  h+=`<div class="panel"><h4>Журнал</h4><div class="tblwrap"><table>
+    <tr><th>Дата</th><th class="num">Кадров</th><th class="num">Накопленно</th><th>Заметка</th><th></th></tr>`;
+  if(!S.scans.length)h+=`<tr><td colspan="5"><div class="empty">Пока пусто. Первая запись — после пилотных 100 кадров.</div></td></tr>`;
+  else{
+    const asc=[...S.scans].sort((a,b)=>a.d<b.d?-1:1);let run=0;const cum={};
+    asc.forEach(x=>{run+=(+x.n||0);cum[x.d]=run;});
+    for(const x of S.scans)h+=`<tr><td>${fmtRu(x.d)}</td><td class="num"><b>${x.n}</b></td>
+      <td class="num">${cum[x.d].toLocaleString('ru-RU')}</td><td>${esc(x.note||'')}</td>
+      <td style="width:30px"><button class="del" onclick="delScan('${x.d}')" title="Удалить">×</button></td></tr>`;
+  }
+  h+='</table></div></div>';
+  return h;
+}
+
+/* ==================== вкладка «Записи с дедом» ==================== */
+function addRec(){
+  const d=document.getElementById('rd').value||todayISO();
+  const topic=document.getElementById('rt').value.trim();
+  const mins=+document.getElementById('rm').value||0;
+  if(!topic){flash('впиши тему разговора',true);return;}
+  S.recs.push({d,topic,mins,cloud:false});
+  S.recs.sort((a,b)=>a.d<b.d?1:-1);
+  save();render();
+}
+function delRec(i){S.recs.splice(i,1);save();render();}
+function toggleCloud(i){S.recs[i].cloud=!S.recs[i].cloud;save();render();}
+function viewRec(){
+  const t=todayISO();
+  const lr=lastRecDate();
+  /* стрик: сколько дней подряд подряд есть запись, считая назад от сегодня или вчера */
+  let streak=0;
+  if(lr){let d=(lr===t)?t:(lr===addDaysISO(t,-1)?lr:null);
+    while(d&&S.recs.some(r=>r.d===d)){streak++;d=addDaysISO(d,-1);}}
+  const nocloud=S.recs.filter(r=>!r.cloud).length;
+  let sc='bad',stxt='записи прерваны';
+  if(streak>=3){sc='ok';stxt=streak+' '+plural(streak,'день','дня','дней')+' подряд';}
+  else if(streak>0){sc='warn';stxt=streak+' '+plural(streak,'день','дня','дней')+' подряд';}
+
+  let h=`<div class="panel">
+    <h3>Новая запись</h3>
+    <p class="hint">Диктофон в телефоне, никакого оборудования. Не интервью на три часа, а несколько спокойных разговоров: разбираете плёнки, он комментирует, телефон пишет. Вопросы — в <code>07_RESEARCH/вопросы-деду.md</code>.</p>
+    <div class="addrow">
+      <input type="date" id="rd" value="${t}">
+      <input type="text" id="rt" placeholder="тема: какие плёнки, о чём говорили">
+      <input type="number" id="rm" min="1" placeholder="минут">
+      <button class="primary" onclick="addRec()">Записал</button>
+    </div>
+    <div class="addrow">
+      <span class="streak ${sc}">🎙 ${stxt}</span>
+      ${nocloud?`<span class="streak bad">☁️ не в облаке: ${nocloud}</span>`:`<span class="streak ok">☁️ всё продублировано</span>`}
+    </div>
+    <p class="hint">Дублировать в облако в тот же вечер — телефон теряется, а память деда не восстанавливается ничем.</p>
+  </div>`;
+  h+=`<div class="panel"><h4>Журнал записей</h4><div class="tblwrap"><table>
+    <tr><th>Дата</th><th>Тема</th><th class="num">Мин</th><th>В облаке</th><th></th></tr>`;
+  if(!S.recs.length)h+=`<tr><td colspan="5"><div class="empty">Ни одной записи. Это первый приоритет поездки — начинается сегодня.</div></td></tr>`;
+  else S.recs.forEach((r,i)=>{
+    h+=`<tr><td>${fmtRu(r.d)}</td><td>${esc(r.topic)}</td><td class="num">${r.mins||''}</td>
+      <td><div class="cb ${r.cloud?'on':''}" onclick="toggleCloud(${i})">${r.cloud?'✓':''}</div></td>
+      <td style="width:30px"><button class="del" onclick="delRec(${i})" title="Удалить">×</button></td></tr>`;
+  });
+  h+='</table></div></div>';
+  return h;
+}
+
+/* ==================== вкладка «Справка» ==================== */
+function viewRef(){
+  return `
+  <div class="panel ref">
+    <div class="warnbox"><b>Заявленное разрешение почти никогда не равно реальному.</b> Производители пишут цифры интерполяции, оптическое бывает вдвое-втрое ниже. Для нас это вопрос прохождения порога Alamy.</div>
+    <h4>Что за аппарат и годится ли он</h4>
+    <div class="tblwrap"><table>
+      <tr><th>Модель</th><th>Реальное оптическое</th><th>Для 35 мм</th></tr>
+      <tr><td>Epson V500 / V600, Canon 9000F</td><td>~1600–2300 dpi <span class="hint">(заявлено 6400)</span></td><td>Слабо: 8–13 Мп, порог Alamy не берёт. Для среднего формата — хорошо</td></tr>
+      <tr><td>Epson V700 / V750 / V800 / V850</td><td>~2300–2900 dpi</td><td>Пограничнo для 35 мм, отлично для 6×6</td></tr>
+      <tr><td>Nikon Coolscan LS-4000 / 5000 ED</td><td><b>4000 dpi настоящих</b></td><td>Отлично. То, что нужно</td></tr>
+      <tr><td>Nikon Coolscan 9000</td><td>4000 dpi</td><td>Отлично, берёт и средний формат</td></tr>
+      <tr><td>Plustek OpticFilm 7600 / 8100 / 8200</td><td>~3200–3500 dpi</td><td>Качество хорошее, но по одному кадру — медленно</td></tr>
+      <tr><td>Imacon / Hasselblad Flextight</td><td>3200–8000 dpi</td><td>Профессиональный уровень, вопросов нет</td></tr>
+    </table></div>
+    <ul>
+      <li><b>Nikon Coolscan</b> — под Windows 10/11 родных драйверов нет, аппарат просто не определится. Нужен VueScan. Плюс батч-адаптер SA-21 / SF-210 на 40 кадров.</li>
+      <li><b>Планшетник Epson V-серии</b> — для 35 мм вытянет только 8–13 Мп. Тогда для мелкого формата разумнее репроцифровка камерой: макрообъектив 1:1, лайтбокс, держатель плёнки.</li>
+      <li><b>Plustek</b> — покадровая подача, на 2000 кадров долго. Можно совмещать со сканированием на втором аппарате.</li>
+    </ul>
+  </div>
+
+  <div class="panel ref">
+    <h4>Настройки сканирования</h4>
+    <p><b>4000 dpi оптических для 35 мм. Не 3200.</b> Кадр 36×24 мм при 4000 dpi даёт 5670×3780 px — это 21 Мп. При 3200 dpi выходит 13,7 Мп. Порог полноценного приёма на Alamy — около 17 Мп. Разница между «годится» и «не проходит» при одинаковых трудозатратах.</p>
+    <div class="tblwrap"><table>
+      <tr><th>Параметр</th><th>Значение</th></tr>
+      <tr><td>Формат</td><td>TIFF, без сжатия или LZW</td></tr>
+      <tr><td>Глубина</td><td>16 бит для ч/б, 48 бит для цвета</td></tr>
+      <tr><td>Автоэкспозиция, автоцвет</td><td><b>Выключить</b></td></tr>
+      <tr><td>Шумоподавление</td><td><b>Выключить</b></td></tr>
+      <tr><td>Резкость (unsharp mask)</td><td><b>Выключить</b></td></tr>
+      <tr><td>Кадрирование</td><td>С запасом, вместе с рамкой кадра</td></tr>
+      <tr><td>Digital ICE</td><td>Только для цветной плёнки</td></tr>
+    </table></div>
+    <p class="hint" style="margin-top:10px">Про ICE: на чёрно-белой плёнке включать нельзя — инфракрасный луч не проходит сквозь серебро, из которого состоит ч/б изображение, кадр получается замыленным. Если в настройках есть 9600 dpi — это программная растяжка, толку ноль, файл раздувается вчетверо.</p>
+    <p>Всё, что выключено, делается потом в обработке — обратимо и по копии. Всё, что сканер «улучшил» на входе, вшито в файл навсегда.</p>
+  </div>
+
+  <div class="panel ref">
+    <h4>Гигиена плёнки и объём</h4>
+    <ul>
+      <li>Резиновая груша — сдувать пыль перед каждым сканом. Главный инструмент, экономит часы ретуши.</li>
+      <li>Хлопковые перчатки — брать негативы только за края.</li>
+      <li>Насухо не тереть никогда. При необходимости — микрофибра с изопропиловым спиртом 99%.</li>
+    </ul>
+    <p>При 21 Мп кадр весит около 40 МБ для ч/б и до 130 МБ для цвета. На 2000 кадров — от 90 до 260 ГБ. Диск на 4 ТБ закрывает архив с запасом на все копии.</p>
+    <h4 style="margin-top:16px">Что купить</h4>
+    <div class="tblwrap"><table>
+      <tr><th>Позиция</th><th class="num">Цена</th><th>Зачем</th></tr>
+      <tr><td>Внешний HDD 4 ТБ</td><td class="num">7–10 тыс ₽</td><td>Забрать данные и держать бэкап</td></tr>
+      <tr><td>Резиновая груша</td><td class="num">~700 ₽</td><td>Пыль. Окупается в первый же час</td></tr>
+      <tr><td>Хлопковые перчатки</td><td class="num">~300 ₽</td><td>Не оставлять отпечатки на негативах</td></tr>
+      <tr><td>Микрофибра + изопропил 99%</td><td class="num">~500 ₽</td><td>Точечная чистка</td></tr>
+      <tr><td>VueScan (по желанию)</td><td class="num">~6 тыс ₽</td><td>Пакетный режим, видит старые сканеры</td></tr>
+    </table></div>
+    <p class="hint" style="margin-top:10px">Минимум около 10 тыс ₽, всё остальное уже есть. Тратить не нужно на лабораторные сканы, платные апскейлеры и реставрацию на аутсорсе — это имеет смысл только под конкретный заказ, когда деньги уже пришли.</p>
+  </div>
+
+  <div class="panel ref">
+    <h4>Два принципа поездки</h4>
+    <p><b>Делаем то, что невозможно сделать удалённо.</b> Обработка, метаданные, загрузка на площадки, переписка с музеями — всё это делается потом из дома. Записать голос деда, потрогать негативы, скопировать данные по USB и настроить сканер можно только здесь.</p>
+    <p><b>Порядок сканирования:</b> повреждённые плёнки (грибок, слипание, уксусный запах — деградируют необратимо) → отобранное дедом лучшее → всё остальное в фоне.</p>
+    <p class="hint">Приоритет каналов продаж: Alamy → прямые продажи (музей, СМИ, издательства) → принты → Telegram/Дзен → микростоки последними. Заказные съёмки чужих людей — без модельных релизов, только editorial или обезличенно.</p>
+  </div>`;
+}
+
+/* ==================== рендер и служебное ==================== */
+function setView(v){view=v;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+  render();
+}
+function render(){
+  renderDash();
+  const box=document.getElementById('viewBox');
+  box.innerHTML = view==='check'?viewCheck() : view==='scan'?viewScan() : view==='rec'?viewRec() : viewRef();
+}
+function doExport(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='photomania-'+todayISO()+'.json';
+  a.click();
+}
+
+async function sendLink(){
+  const email=document.getElementById('email').value.trim();
+  const msg=document.getElementById('loginMsg');
+  if(!email){msg.innerHTML='<span style="color:#dc2626">Введи почту</span>';return;}
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;btn.textContent='Отправляю...';
+  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.href.split('#')[0]}});
+  btn.disabled=false;btn.textContent='Прислать ссылку';
+  msg.innerHTML=error
+    ?'<span style="color:#dc2626">'+error.message+'</span>'
+    :'<span style="color:#059669">Ссылка ушла на '+email+'. Открой письмо на этом же устройстве.</span>';
+}
+async function signOut(){await sb.auth.signOut();location.reload();}
+
+async function boot(){
+  const cfg=window.TRACKER_CONFIG||{};
+  const bootEl=document.getElementById('boot');
+  if(!cfg.SUPABASE_URL){
+    bootEl.innerHTML='Не заполнен <b>config.js</b>: нужны SUPABASE_URL и SUPABASE_ANON_KEY.';
+    return;
+  }
+  sb=supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){
+    bootEl.style.display='none';
+    document.getElementById('loginBox').style.display='';
+    return;
+  }
+  user=session.user;
+  try{await loadState();}
+  catch(e){
+    bootEl.innerHTML='Не удалось загрузить данные: '+e.message+
+      '<br><span class="hint">Проверь, что schema_photomania.sql выполнен в Supabase.</span>';
+    return;
+  }
+  document.getElementById('whoBtn').textContent=user.email+' · выйти';
+  bootEl.style.display='none';
+  document.getElementById('app').style.display='';
+  render();
+}
+boot();
+</script>
+</body>
+</html>
