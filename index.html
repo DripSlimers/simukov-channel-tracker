@@ -454,15 +454,19 @@ const PLATFORMS = {
   youtube:   {label:'YouTube Shorts',  emoji:'▶️', color:'#f0324b'},
   instagram: {label:'Instagram',       emoji:'📸', color:'#e1306c'},
   tiktok:    {label:'TikTok',          emoji:'🎵', color:'#ff2d55'},
+  threads:   {label:'Threads',         emoji:'🧵', color:'#9ca3af'},
 };
-/* цели ежедневного постинга: личные 4 площадки + 2 канала lovlead */
-const PF_ORDER = ['telegram','youtube','instagram','tiktok','lov_tg','lov_tt'];
-const PF_PERSONAL = ['telegram','youtube','instagram','tiktok'];
+/* цели ежедневного постинга: личные 5 площадок + 2 канала lovlead */
+const PF_ORDER = ['telegram','youtube','instagram','tiktok','threads','lov_tg','lov_tt'];
+const PF_PERSONAL = ['telegram','youtube','instagram','tiktok','threads'];
+/* площадка идет в зачет «полного дня» только с даты запуска: история до нее не ломается */
+const PF_SINCE = {threads:'2026-08-11'};
 const POST_META = {
   telegram:  {...PLATFORMS.telegram,  group:'Личное'},
   youtube:   {...PLATFORMS.youtube,   group:'Личное'},
   instagram: {...PLATFORMS.instagram, group:'Личное'},
   tiktok:    {...PLATFORMS.tiktok,    group:'Личное'},
+  threads:   {...PLATFORMS.threads,   group:'Личное'},
   lov_tg:    {label:'Telegram lovlead', emoji:'✈️', color:'#229ED9', group:'lovlead'},
   lov_tt:    {label:'TikTok lovlead',   emoji:'🎵', color:'#8b5cf6', group:'lovlead'},
 };
@@ -475,6 +479,7 @@ const SEED = [
   {id:'yt', platform:'youtube',   name:'YouTube Shorts', handle:'',            url:''},
   {id:'ig', platform:'instagram', name:'Instagram',      handle:'designbrosk', url:'https://instagram.com/designbrosk'},
   {id:'tt', platform:'tiktok',    name:'TikTok',         handle:'@simukovich', url:'https://www.tiktok.com/@simukovich'},
+  {id:'th', platform:'threads',   name:'Threads',        handle:'designbrosk', url:'https://www.threads.com/@designbrosk'},
   {id:'lovtg', platform:'telegram', name:'Telegram lovlead', handle:'', url:''},
   {id:'lovtt', platform:'tiktok',   name:'TikTok lovlead',   handle:'', url:''},
 ];
@@ -649,13 +654,23 @@ async function loadAll(){
     await sb.from('social_accounts').upsert(DATA.map(a =>
       ({user_id:user.id, id:a.id, platform:a.platform, name:a.name, handle:a.handle, url:a.url, sort:a.sort})),
       {onConflict:'user_id,id'});
+  } else if(!DATA.some(a => a.platform === 'threads')){
+    /* база заведена раньше, до Threads: досеять карточку один раз */
+    const seed = SEED.find(s => s.platform === 'threads');
+    const a = {...seed, sort:DATA.length, history:[]};
+    DATA.push(a);
+    await sb.from('social_accounts').upsert(
+      [{user_id:user.id, id:a.id, platform:a.platform, name:a.name, handle:a.handle, url:a.url, sort:a.sort}],
+      {onConflict:'user_id,id'});
   }
 }
 
 /* ============ вкладка «Постинг» ============ */
 function dayObj(ds){ return POSTING[ds] || {}; }
 function isPosted(ds, plat){ const d = POSTING[ds]; return !!(d && d[plat]); }
-function isFullDay(ds){ return PF_PERSONAL.every(p => isPosted(ds, p)); }
+/* какие личные площадки считаются нормой в этот день (новые - только с даты запуска) */
+function personalFor(ds){ return PF_PERSONAL.filter(p => !PF_SINCE[p] || ds >= PF_SINCE[p]); }
+function isFullDay(ds){ return personalFor(ds).every(p => isPosted(ds, p)); }
 function markedDates(){ return Object.keys(POSTING).filter(ds => Object.keys(POSTING[ds]||{}).length).sort(); }
 
 function setPost(ds, plat, on, extra){
@@ -778,7 +793,7 @@ function renderPosting(){
       <div class="pstripe" style="background:var(--accent)"></div>
       <div class="ph"><span>🎯</span>Полных дней подряд</div>
       <div class="streak" style="${fs>0?'color:var(--up)':''}">${fs} <small>${plural(fs)}</small></div>
-      <div class="mrow"><span>личные 4 площадки закрыты</span><b>${elapsed?monthFullCount(calY,calM)+' / '+elapsed:monthFullCount(calY,calM)}</b></div>
+      <div class="mrow"><span>личные ${personalFor(t).length} площадки закрыты</span><b>${elapsed?monthFullCount(calY,calM)+' / '+elapsed:monthFullCount(calY,calM)}</b></div>
     </div>`;
   const stats = `<div class="pf-stats-h">Личное</div>
     <div class="pf-stats">${PF_PERSONAL.map(statCard).join('')}${fullCard}</div>
@@ -1057,7 +1072,7 @@ async function delAccount(id){
 }
 function addAccount(){
   const name = prompt('Название аккаунта (напр. «Второй канал»):'); if(!name) return;
-  let platform = prompt('Площадка: telegram / youtube / instagram / tiktok', 'telegram');
+  let platform = prompt('Площадка: telegram / youtube / instagram / tiktok / threads', 'telegram');
   platform = (platform||'').trim().toLowerCase();
   if(!PLATFORMS[platform]) platform = 'telegram';
   const id = 'a' + Date.now();

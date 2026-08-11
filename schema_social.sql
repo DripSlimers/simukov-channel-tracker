@@ -6,7 +6,7 @@
 create table if not exists public.posting_marks (
   user_id  uuid not null references auth.users(id) on delete cascade,
   day      date not null,
-  platform text not null,               -- telegram / youtube / instagram / tiktok
+  platform text not null,               -- telegram / youtube / instagram / tiktok / threads
   note     text not null default '',    -- о чем пост
   url      text not null default '',    -- ссылка на публикацию
   ts       timestamptz not null default now(),
