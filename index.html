@@ -304,6 +304,7 @@ table.mx td:last-child,table.mx th:last-child{padding-right:14px}
     <div class="tab"        data-view="channels"onclick="setView('channels')">Каналы</div>
     <div class="tab"        data-view="tpl"     onclick="setView('tpl')">Шаблоны</div>
     <div class="tab"        data-view="tasks"   onclick="setView('tasks')">Задачи</div>
+    <div class="tab"        data-view="sprint"  onclick="setView('sprint')">Спринт 1000</div>
   </div>
   <div id="postView"></div>
   <div id="socialView" style="display:none"></div>
@@ -312,6 +313,7 @@ table.mx td:last-child,table.mx th:last-child{padding-right:14px}
   <div id="chView" style="display:none"></div>
   <div id="tplView" style="display:none"></div>
   <div id="taskView" style="display:none"></div>
+  <div id="sprintView" style="display:none"></div>
 </div>
 </div>
 
@@ -1341,9 +1343,214 @@ function addCustomTask(){
 function toggleCustomTask(i){ state.custom[i].done = !state.custom[i].done; saveState(); renderTasks(); }
 function delCustomTask(i){ state.custom.splice(i,1); saveState(); renderTasks(); }
 
+/* ============ вкладка «Спринт 1000» ============
+   План публикаций lovlead в TikTok до 1000 подписчиков.
+   Источник: Стартап/маркетинг/контент-план-спринт-1000.md
+   Факт хранится в state.sprint (jsonb app_state), отдельной таблицы не нужно.
+   Формат: К карусель, G переписка с GPT, Р резерв. Половина продукта: Д добыча и КП, C ведение и CRM. */
+const SPRINT_GOAL  = 1000;   // порог, на котором TikTok открывает ссылку в био
+const SPRINT_BASE  = 243;    // подписчиков на старте спринта, 12.08.2026
+const SPRINT_START = '2026-08-13';
+/* эталон: две публикации, давшие 86% базы. Не редактируется, нужен для сравнения */
+const SPRINT_REF = [
+  {d:'19.07', t:'5 фраз, после которых клиент уходит молча', v:55600, s:162, r:2.91},
+  {d:'17.07', t:'Переписка с GPT', v:38400, s:47, r:1.22},
+];
+const SPRINT_PLAN = [
+  {w:1, d:'2026-08-13', f:'К', h:'C', t:'Еще 5 фраз, после которых клиент уходит молча (часть 2)'},
+  {w:1, d:'2026-08-14', f:'К', h:'Д', t:'5 ошибок в первом письме компании, из-за которых его не открывают'},
+  {w:1, d:'2026-08-15', f:'G', h:'C', t:'Сколько сделок в РФ разваливается на «я подумаю»'},
+  {w:1, d:'2026-08-16', f:'К', h:'Д', t:'5 признаков, что ты ищешь заказы не там'},
+  {w:1, d:'2026-08-17', f:'К', h:'C', t:'5 признаков, что клиент уже выбрал другого'},
+  {w:1, d:'2026-08-18', f:'Р', h:'Д', t:'Карусель «5 ниш, где сайты хуже всего» (готова с тест-недели)'},
+  {w:1, d:'2026-08-19', f:'К', h:'C', t:'5 причин, почему клиент читает и не отвечает'},
+  {w:2, d:'2026-08-20', f:'К', h:'Д', t:'5 причин, почему твое КП не дочитывают до цены'},
+  {w:2, d:'2026-08-21', f:'К', h:'C', t:'5 моментов, когда клиент решает, что ты дорогой'},
+  {w:2, d:'2026-08-22', f:'G', h:'Д', t:'На сколько падает шанс сделки, если ответить через сутки'},
+  {w:2, d:'2026-08-23', f:'К', h:'Д', t:'5 сигналов на сайте компании, что ей нужен фрилансер прямо сейчас'},
+  {w:2, d:'2026-08-24', f:'К', h:'C', t:'5 причин, почему тебе не платят вторую часть'},
+  {w:2, d:'2026-08-25', f:'Р', h:'',  t:'Ролик в закреп либо повтор лучшей темы недели 1'},
+  {w:2, d:'2026-08-26', f:'К', h:'Д', t:'5 ошибок в портфолио, из-за которых тебя не выбирают'},
+  {w:3, d:'2026-08-27', f:'К', h:'C', t:'5 привычек, из-за которых работаешь много, а получаешь мало'},
+  {w:3, d:'2026-08-28', f:'К', h:'Д', t:'5 причин, почему твой отклик удаляют не читая'},
+  {w:3, d:'2026-08-29', f:'G', h:'Д', t:'Сколько заказчиков уходит к тому, кто просто написал первым'},
+  {w:3, d:'2026-08-30', f:'К', h:'C', t:'5 типов клиентов, которые не заплатят - видно по первому сообщению'},
+  {w:3, d:'2026-08-31', f:'К', h:'Д', t:'5 ошибок в цене КП, из-за которых берут другого при том же качестве'},
+  {w:3, d:'2026-09-01', f:'Р', h:'',  t:'Резерв'},
+  {w:3, d:'2026-09-02', f:'К', h:'C', t:'5 фраз, после которых правки становятся бесконечными'},
+  {w:4, d:'2026-09-03', f:'К', h:'Д', t:'5 признаков, что компания уже ищет исполнителя, но не тебя'},
+  {w:4, d:'2026-09-04', f:'К', h:'C', t:'5 причин, почему постоянные клиенты уходят через полгода'},
+  {w:4, d:'2026-09-05', f:'G', h:'Д', t:'Почему у опытного заказов меньше, чем у новичка с системой'},
+  {w:4, d:'2026-09-06', f:'К', h:'Д', t:'5 мест на сайте компании, по которым видно ее бюджет'},
+  {w:4, d:'2026-09-07', f:'К', h:'C', t:'5 ошибок при обсуждении сроков, за которые платишь ты'},
+  {w:4, d:'2026-09-08', f:'Р', h:'',  t:'Резерв'},
+  {w:4, d:'2026-09-09', f:'К', h:'C', t:'5 моментов переписки, где ты теряешь клиента и не замечаешь'},
+];
+const SPRINT_BANK = {
+  'Д - добыча и КП': [
+    '5 ошибок в поиске клиентов, из-за которых ты конкурируешь с сотней таких же',
+    '5 причин, почему компания не отвечает, хотя сайт у нее мертвый',
+    '5 вещей в КП, которые клиент читает первыми (а ты ставишь их в конец)',
+    '5 признаков, что ниша выжжена и заходить туда не надо',
+    '5 фраз в холодном письме, после которых его помечают спамом',
+  ],
+  'C - ведение и CRM': [
+    '5 фраз, после которых клиент начинает торговаться',
+    '5 причин, почему тебя не рекомендуют, хотя работой довольны',
+    '5 признаков, что проект превратится в бесплатную поддержку навсегда',
+    '5 вопросов, которые клиент не задает вслух, но по ним решает',
+    '5 бесплатных вещей, которые ты делаешь и не считаешь работой',
+  ],
+};
+function sprintRec(d){ return (state.sprint && state.sprint[d]) || {}; }
+function sprintSet(d, field, val){
+  if(!state.sprint) state.sprint = {};
+  const r = state.sprint[d] = state.sprint[d] || {};
+  if(field === 'url') r.url = val.trim();
+  else { const n = val === '' ? null : +val; if(n === null) delete r[field]; else r[field] = n; }
+  saveState(); renderSprint();
+}
+/* подписчиков на 1000 просмотров - главная метрика спринта */
+function sprintRate(r){ return (r.views > 0 && r.subs != null) ? r.subs / r.views * 1000 : null; }
+function sprintTotals(rows){
+  const t = {views:0, saves:0, subs:0, done:0};
+  rows.forEach(p => { const r = sprintRec(p.d);
+    if(r.views != null || r.subs != null){ t.done++; t.views += +r.views || 0;
+      t.saves += +r.saves || 0; t.subs += +r.subs || 0; } });
+  t.rate = t.views > 0 ? t.subs / t.views * 1000 : null;
+  return t;
+}
+function renderSprint(){
+  const all = sprintTotals(SPRINT_PLAN);
+  const now = SPRINT_BASE + all.subs;
+  const left = Math.max(0, SPRINT_GOAL - now);
+  const pct = Math.min(100, now / SPRINT_GOAL * 100);
+  /* темп: считаем только по неделям, где есть хотя бы одна заполненная публикация */
+  const weeks = [1,2,3,4].map(w => sprintTotals(SPRINT_PLAN.filter(p => p.w === w)));
+  const liveWeeks = weeks.filter(w => w.done > 0);
+  const perWeek = liveWeeks.length ? liveWeeks.reduce((s,w) => s + w.subs, 0) / liveWeeks.length : 0;
+  const weeksLeft = perWeek > 0 ? left / perWeek : null;
+  let eta = '-';
+  if(weeksLeft != null && left > 0){
+    const dt = new Date(); dt.setDate(dt.getDate() + Math.ceil(weeksLeft * 7));
+    eta = dt.toLocaleDateString('ru-RU', {day:'numeric', month:'short'});
+  } else if(left === 0) eta = 'взято';
+
+  let h = `<div class="callout blue"><span class="ic">🎯</span><div>
+    <b>Цель: 1000 подписчиков TikTok к 30 сентября.</b> На этом пороге TikTok открывает кликабельную
+    ссылку в био, и мост в Telegram перестает стоить «запомни хендл». До порога целевая метрика -
+    подписчик TikTok, канал растет побочно.
+    План и обоснование: <i>Стартап/маркетинг/контент-план-спринт-1000.md</i></div></div>`;
+
+  h += `<div class="sumcards">
+    <div class="sumcard"><div class="lbl">Подписчиков сейчас</div><div class="v num">${fmt(now,0)}</div>
+      <div class="hint">старт ${SPRINT_BASE}, набрано +${fmt(all.subs,0)}</div></div>
+    <div class="sumcard"><div class="lbl">До 1000 осталось</div><div class="v num">${fmt(left,0)}</div>
+      <div class="hint">${fmt(pct,0)}% пути пройдено</div></div>
+    <div class="sumcard"><div class="lbl">Темп в неделю</div><div class="v num">${perWeek ? fmt(perWeek,0) : '-'}</div>
+      <div class="hint">нужно 110-130</div></div>
+    <div class="sumcard"><div class="lbl">Прогноз выхода на 1000</div><div class="v">${eta}</div>
+      <div class="hint">по текущему темпу</div></div>
+    <div class="sumcard"><div class="lbl">Подписчиков на 1000</div>
+      <div class="v num">${all.rate != null ? fmt(all.rate,2) : '-'}</div>
+      <div class="hint">эталон 2,91</div></div>
+    <div class="sumcard"><div class="lbl">Опубликовано</div><div class="v num">${all.done} / ${SPRINT_PLAN.length}</div>
+      <div class="hint">просмотров ${fmt(all.views,0)}</div></div>
+  </div>`;
+
+  h += `<div style="background:var(--line2);border-radius:99px;height:10px;overflow:hidden;margin-bottom:20px">
+    <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:99px;transition:.3s"></div></div>`;
+
+  if(perWeek > 0 && perWeek < 70){
+    h += `<div class="callout yellow"><span class="ic">⚠️</span><div>Темп ниже 70 подписчиков в неделю.
+      Если так две недели подряд - план не сходится: поднимаем частоту до 10 публикаций в неделю
+      либо пересобираем формулу заголовка.</div></div>`;
+  }
+
+  h += `<h2 class="sec">Эталон: что дало 86% базы</h2>
+    <div class="tbl-wrap"><div class="tbl-scroll"><table><thead><tr>
+      <th>Дата</th><th style="text-align:left">Тема</th><th>Просмотры</th><th>Подписчики</th><th>На 1000</th>
+    </tr></thead><tbody>`;
+  SPRINT_REF.forEach(r => {
+    h += `<tr><td>${r.d}</td><td style="text-align:left">${esc(r.t)}</td>
+      <td class="num">${fmt(r.v,0)}</td><td class="num">${fmt(r.s,0)}</td>
+      <td class="num"><b>${fmt(r.r,2)}</b></td></tr>`;
+  });
+  h += `</tbody></table></div></div>
+    <div class="hint" style="margin:8px 0 4px">Формула-победитель: <b>5 [фраз / ошибок / причин / признаков],
+    после которых клиент [негативный исход]</b>. Число в заголовке, слово «клиент», тишина как исход,
+    и это про ошибку зрителя - он листает, чтобы проверить себя.</div>`;
+
+  [1,2,3,4].forEach(w => {
+    const rows = SPRINT_PLAN.filter(p => p.w === w);
+    const t = weeks[w-1];
+    const from = rows[0].d.slice(8) + '.' + rows[0].d.slice(5,7);
+    const to = rows[rows.length-1].d.slice(8) + '.' + rows[rows.length-1].d.slice(5,7);
+    h += `<h2 class="sec">Неделя ${w} <span class="hint">${from} - ${to}${
+      t.done ? ` · +${fmt(t.subs,0)} подписчиков · ${t.rate != null ? fmt(t.rate,2) : '-'} на 1000` : ''}</span></h2>
+      <div class="tbl-wrap"><div class="tbl-scroll"><table style="min-width:1000px"><thead><tr>
+        <th style="width:74px">Дата</th><th style="width:44px">Тип</th><th style="width:44px">Пол.</th>
+        <th style="text-align:left">Тема</th>
+        <th style="width:92px">Просмотры</th><th style="width:84px">Сохран.</th>
+        <th style="width:96px">Подписчики</th><th style="width:78px">На 1000</th>
+        <th style="width:120px;text-align:left">Ссылка</th>
+      </tr></thead><tbody>`;
+    rows.forEach(p => {
+      const r = sprintRec(p.d);
+      const rate = sprintRate(r);
+      const dd = p.d.slice(8) + '.' + p.d.slice(5,7);
+      const col = p.h === 'Д' ? 'var(--accent)' : p.h === 'C' ? 'var(--warn)' : 'var(--muted)';
+      const rateCol = rate == null ? '' : rate >= 2.5 ? 'color:var(--up);font-weight:700'
+        : rate < 1 ? 'color:var(--down)' : '';
+      h += `<tr>
+        <td>${dd}</td>
+        <td><span class="hint" style="font-weight:700">${p.f}</span></td>
+        <td><span style="color:${col};font-weight:700">${p.h || '-'}</span></td>
+        <td style="text-align:left">${esc(p.t)}</td>
+        <td><input class="cellin" type="number" min="0" value="${r.views != null ? r.views : ''}"
+          onchange="sprintSet('${p.d}','views',this.value)"></td>
+        <td><input class="cellin" type="number" min="0" value="${r.saves != null ? r.saves : ''}"
+          onchange="sprintSet('${p.d}','saves',this.value)"></td>
+        <td><input class="cellin" type="number" min="0" value="${r.subs != null ? r.subs : ''}"
+          onchange="sprintSet('${p.d}','subs',this.value)"></td>
+        <td class="num" style="${rateCol}">${rate != null ? fmt(rate,2) : '-'}</td>
+        <td style="text-align:left"><input class="cellin" type="url" style="text-align:left;min-width:110px"
+          placeholder="ссылка" value="${esc(r.url||'')}"
+          onchange="sprintSet('${p.d}','url',this.value)"></td>
+      </tr>`;
+    });
+    h += `</tbody><tfoot><tr><td colspan="4">Итого за неделю</td>
+      <td class="num">${fmt(t.views,0)}</td><td class="num">${fmt(t.saves,0)}</td>
+      <td class="num">${fmt(t.subs,0)}</td>
+      <td class="num">${t.rate != null ? fmt(t.rate,2) : '-'}</td><td></td></tr></tfoot>
+      </table></div></div>`;
+  });
+
+  h += `<h2 class="sec">Банк тем про запас</h2><div class="grid">`;
+  for(const k in SPRINT_BANK){
+    h += `<div class="card"><h3>${esc(k)}</h3><ul style="margin:8px 0 0;padding-left:18px">${
+      SPRINT_BANK[k].map(x => `<li style="margin-bottom:5px">${esc(x)}</li>`).join('')}</ul></div>`;
+  }
+  h += `</div>`;
+
+  h += `<h2 class="sec">Правила спринта</h2>
+    <div class="callout yellow"><span class="ic">📌</span><div>
+      <b>Баланс тем 50 на 50.</b> Д - добыча и КП (главная фишка сервиса), C - ведение и напоминания.
+      Формула-зеркало это форма, а не тема: она одинаково хорошо надевается на обе половины.
+      В карусели кластера C обязателен мостиковый слайд перед CTA: «ты боишься давить на клиента,
+      потому что он у тебя один. Когда клиентов поток, тишина одного не страшна».<br><br>
+      <b>Цену в TikTok не называем вообще.</b> Цель спринта - подписка, а не оплата, оффер живет только в Telegram.
+      Пробный доступ 395 рублей за 7 дней, «неделя бесплатно» запрещена, фаундерская 1290 непубличная.<br><br>
+      <b>Демо-роликов в ленте охвата нет</b> - не чаще одного в две недели и только в закреп.
+      Подписчиков они не набирают, а стоят рабочий день против часа на карусель.
+    </div></div>`;
+
+  document.getElementById('sprintView').innerHTML = h;
+}
+
 /* ============ вкладки и тема ============ */
 const VIEWS = {posting:'postView', social:'socialView', week:'weekView', summary:'sumView',
-  channels:'chView', tpl:'tplView', tasks:'taskView'};
+  channels:'chView', tpl:'tplView', tasks:'taskView', sprint:'sprintView'};
 function setView(v){
   for(const k in VIEWS) document.getElementById(VIEWS[k]).style.display = k === v ? '' : 'none';
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === v));
@@ -1354,6 +1561,7 @@ function setView(v){
   if(v === 'channels') renderChannels();
   if(v === 'tpl') renderTemplates();
   if(v === 'tasks') renderTasks();
+  if(v === 'sprint') renderSprint();
 }
 function toggleTheme(){
   const cur = document.documentElement.getAttribute('data-theme');
