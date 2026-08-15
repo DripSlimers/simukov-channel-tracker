@@ -1351,10 +1351,12 @@ function delCustomTask(i){ state.custom.splice(i,1); saveState(); renderTasks();
 const SPRINT_GOAL  = 1000;   // порог, на котором TikTok открывает ссылку в био
 const SPRINT_BASE  = 243;    // подписчиков на старте спринта, 12.08.2026
 const SPRINT_START = '2026-08-13';
-/* эталон: две публикации, давшие 86% базы. Не редактируется, нужен для сравнения */
-const SPRINT_REF = [
-  {d:'19.07', t:'5 фраз, после которых клиент уходит молча', v:55600, s:162, r:2.91},
-  {d:'17.07', t:'Переписка с GPT', v:38400, s:47, r:1.22},
+/* эталон: публикации-ориентиры, с которыми сравнивается спринт.
+   Правится прямо в таблице, факт лежит в state.sprintRef (jsonb app_state).
+   «На 1000» не хранится, считается из просмотров и подписчиков. */
+const SPRINT_REF_DEFAULT = [
+  {d:'19.07', t:'5 фраз, после которых клиент уходит молча', v:55600, s:162},
+  {d:'17.07', t:'Переписка с GPT', v:38400, s:47},
 ];
 const SPRINT_PLAN = [
   {w:1, d:'2026-08-13', f:'К', h:'C', t:'Еще 5 фраз, после которых клиент уходит молча (часть 2)'},
@@ -1402,6 +1404,37 @@ const SPRINT_BANK = {
     '5 бесплатных вещей, которые ты делаешь и не считаешь работой',
   ],
 };
+function sprintRefRows(){
+  if(!Array.isArray(state.sprintRef))
+    state.sprintRef = SPRINT_REF_DEFAULT.map(r => Object.assign({}, r));
+  return state.sprintRef;
+}
+function refRate(r){ return (r.v > 0 && r.s != null) ? r.s / r.v * 1000 : null; }
+/* лучший эталон - планка, с которой сравнивается текущий спринт */
+function sprintRefBest(){
+  const rates = sprintRefRows().map(refRate).filter(x => x != null);
+  return rates.length ? Math.max(...rates) : null;
+}
+function sprintRefSet(i, field, val){
+  const r = sprintRefRows()[i]; if(!r) return;
+  if(field === 'd' || field === 't') r[field] = val.trim();
+  else { const n = val === '' ? null : +val; r[field] = (n === null || isNaN(n)) ? null : n; }
+  saveState(); renderSprint();
+}
+function sprintRefAdd(){
+  sprintRefRows().push({d:'', t:'', v:null, s:null});
+  saveState(); renderSprint();
+}
+function sprintRefDel(i){
+  const r = sprintRefRows()[i]; if(!r) return;
+  if(!confirm('Удалить строку эталона' + (r.t ? ' «' + r.t + '»' : '') + '?')) return;
+  state.sprintRef.splice(i, 1); saveState(); renderSprint();
+}
+function sprintRefReset(){
+  if(!confirm('Вернуть эталон к исходным двум публикациям?')) return;
+  state.sprintRef = SPRINT_REF_DEFAULT.map(r => Object.assign({}, r));
+  saveState(); renderSprint();
+}
 function sprintRec(d){ return (state.sprint && state.sprint[d]) || {}; }
 function sprintSet(d, field, val){
   if(!state.sprint) state.sprint = {};
@@ -1422,6 +1455,8 @@ function sprintTotals(rows){
 }
 function renderSprint(){
   const all = sprintTotals(SPRINT_PLAN);
+  const refRows = sprintRefRows();
+  const refBest = sprintRefBest();
   const now = SPRINT_BASE + all.subs;
   const left = Math.max(0, SPRINT_GOAL - now);
   const pct = Math.min(100, now / SPRINT_GOAL * 100);
@@ -1453,7 +1488,7 @@ function renderSprint(){
       <div class="hint">по текущему темпу</div></div>
     <div class="sumcard"><div class="lbl">Подписчиков на 1000</div>
       <div class="v num">${all.rate != null ? fmt(all.rate,2) : '-'}</div>
-      <div class="hint">эталон 2,91</div></div>
+      <div class="hint">эталон ${refBest != null ? fmt(refBest,2) : '-'}</div></div>
     <div class="sumcard"><div class="lbl">Опубликовано</div><div class="v num">${all.done} / ${SPRINT_PLAN.length}</div>
       <div class="hint">просмотров ${fmt(all.views,0)}</div></div>
   </div>`;
@@ -1467,17 +1502,37 @@ function renderSprint(){
       либо пересобираем формулу заголовка.</div></div>`;
   }
 
-  h += `<h2 class="sec">Эталон: что дало 86% базы</h2>
-    <div class="tbl-wrap"><div class="tbl-scroll"><table><thead><tr>
-      <th>Дата</th><th style="text-align:left">Тема</th><th>Просмотры</th><th>Подписчики</th><th>На 1000</th>
+  h += `<h2 class="sec">Эталон: с чем сравниваем</h2>
+    <div class="tbl-wrap"><div class="tbl-scroll"><table style="min-width:760px"><thead><tr>
+      <th style="width:76px">Дата</th><th style="text-align:left">Тема</th>
+      <th style="width:100px">Просмотры</th><th style="width:100px">Подписчики</th>
+      <th style="width:80px">На 1000</th><th style="width:34px"></th>
     </tr></thead><tbody>`;
-  SPRINT_REF.forEach(r => {
-    h += `<tr><td>${r.d}</td><td style="text-align:left">${esc(r.t)}</td>
-      <td class="num">${fmt(r.v,0)}</td><td class="num">${fmt(r.s,0)}</td>
-      <td class="num"><b>${fmt(r.r,2)}</b></td></tr>`;
+  refRows.forEach((r, i) => {
+    const rr = refRate(r);
+    h += `<tr>
+      <td><input class="cellin" type="text" style="text-align:center;min-width:56px" placeholder="дд.мм"
+        value="${esc(r.d || '')}" onchange="sprintRefSet(${i},'d',this.value)"></td>
+      <td style="text-align:left"><input class="cellin" type="text" style="text-align:left;min-width:220px"
+        placeholder="тема" value="${esc(r.t || '')}" onchange="sprintRefSet(${i},'t',this.value)"></td>
+      <td><input class="cellin" type="number" min="0" value="${r.v != null ? r.v : ''}"
+        onchange="sprintRefSet(${i},'v',this.value)"></td>
+      <td><input class="cellin" type="number" min="0" value="${r.s != null ? r.s : ''}"
+        onchange="sprintRefSet(${i},'s',this.value)"></td>
+      <td class="num"><b>${rr != null ? fmt(rr,2) : '-'}</b></td>
+      <td><button class="ghost" style="border:none;color:var(--muted);padding:0 6px;font-size:15px"
+        onclick="sprintRefDel(${i})" title="Удалить строку">×</button></td>
+    </tr>`;
   });
+  if(!refRows.length){
+    h += `<tr><td colspan="6" class="hint" style="text-align:left">Эталонных публикаций нет.
+      Добавь строку, чтобы было с чем сравнивать спринт.</td></tr>`;
+  }
   h += `</tbody></table></div></div>
-    <div class="hint" style="margin:8px 0 4px">Формула-победитель: <b>5 [фраз / ошибок / причин / признаков],
+    <div style="display:flex;gap:8px;margin:8px 0 4px;flex-wrap:wrap">
+      <button class="ghost" onclick="sprintRefAdd()">+ строка</button>
+      <button class="ghost" onclick="sprintRefReset()">Вернуть исходные</button></div>
+    <div class="hint" style="margin:0 0 4px">Формула-победитель: <b>5 [фраз / ошибок / причин / признаков],
     после которых клиент [негативный исход]</b>. Число в заголовке, слово «клиент», тишина как исход,
     и это про ошибку зрителя - он листает, чтобы проверить себя.</div>`;
 
