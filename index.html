@@ -59,6 +59,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .sumcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
 .sumcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
 .sumcard .v{font-size:26px;font-weight:800;margin-top:4px;letter-spacing:-.5px}
+.sumcard input.vin{font-size:26px;font-weight:800;margin-top:4px;letter-spacing:-.5px;
+  text-align:left;padding:2px 6px;width:100%;font-variant-numeric:tabular-nums}
+.sumcard input.hintin{display:inline-block;width:62px;min-width:0;font-size:12px;
+  color:var(--muted);text-align:left;padding:1px 5px}
 .tbl-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
 .tbl-scroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse;background:var(--panel)}
@@ -1349,7 +1353,7 @@ function delCustomTask(i){ state.custom.splice(i,1); saveState(); renderTasks();
    Факт хранится в state.sprint (jsonb app_state), отдельной таблицы не нужно.
    Формат: К карусель, G переписка с GPT, Р резерв. Половина продукта: Д добыча и КП, C ведение и CRM. */
 const SPRINT_GOAL  = 1000;   // порог, на котором TikTok открывает ссылку в био
-const SPRINT_BASE  = 243;    // подписчиков на старте спринта, 12.08.2026
+const SPRINT_BASE  = 243;    // подписчиков на старте спринта, 12.08.2026; дефолт для state.sprintBase
 const SPRINT_START = '2026-08-13';
 /* эталон: публикации-ориентиры, с которыми сравнивается спринт.
    Правится прямо в таблице, факт лежит в state.sprintRef (jsonb app_state).
@@ -1404,6 +1408,21 @@ const SPRINT_BANK = {
     '5 бесплатных вещей, которые ты делаешь и не считаешь работой',
   ],
 };
+/* «Подписчиков сейчас»: по умолчанию старт плюс набранное по строкам плана,
+   но фактическое число из TikTok можно вбить руками - оно перебивает расчет.
+   Пустое поле возвращает автоматический расчет. */
+function sprintBase(){ return state.sprintBase != null ? +state.sprintBase : SPRINT_BASE; }
+function sprintNowVal(all){ return state.sprintNow != null ? +state.sprintNow : sprintBase() + all.subs; }
+function sprintSetBase(val){
+  const n = val === '' ? null : +val;
+  if(n === null || isNaN(n)) delete state.sprintBase; else state.sprintBase = n;
+  saveState(); renderSprint();
+}
+function sprintSetNow(val){
+  const n = val === '' ? null : +val;
+  if(n === null || isNaN(n)) delete state.sprintNow; else state.sprintNow = n;
+  saveState(); renderSprint();
+}
 function sprintRefRows(){
   if(!Array.isArray(state.sprintRef))
     state.sprintRef = SPRINT_REF_DEFAULT.map(r => Object.assign({}, r));
@@ -1457,7 +1476,8 @@ function renderSprint(){
   const all = sprintTotals(SPRINT_PLAN);
   const refRows = sprintRefRows();
   const refBest = sprintRefBest();
-  const now = SPRINT_BASE + all.subs;
+  const nowManual = state.sprintNow != null;
+  const now = sprintNowVal(all);
   const left = Math.max(0, SPRINT_GOAL - now);
   const pct = Math.min(100, now / SPRINT_GOAL * 100);
   /* темп: считаем только по неделям, где есть хотя бы одна заполненная публикация */
@@ -1478,8 +1498,13 @@ function renderSprint(){
     План и обоснование: <i>Стартап/маркетинг/контент-план-спринт-1000.md</i></div></div>`;
 
   h += `<div class="sumcards">
-    <div class="sumcard"><div class="lbl">Подписчиков сейчас</div><div class="v num">${fmt(now,0)}</div>
-      <div class="hint">старт ${SPRINT_BASE}, набрано +${fmt(all.subs,0)}</div></div>
+    <div class="sumcard"><div class="lbl">Подписчиков сейчас</div>
+      <input class="cellin vin" type="number" min="0" value="${now}"
+        onchange="sprintSetNow(this.value)">
+      <div class="hint">старт <input class="cellin hintin" type="number" min="0" value="${sprintBase()}"
+        onchange="sprintSetBase(this.value)">, набрано +${fmt(all.subs,0)}${
+        nowManual ? ` · вписано вручную, <button class="ghost" style="border:none;padding:0;font-size:12px;
+          color:var(--accent)" onclick="sprintSetNow('')">считать по строкам</button>` : ''}</div></div>
     <div class="sumcard"><div class="lbl">До 1000 осталось</div><div class="v num">${fmt(left,0)}</div>
       <div class="hint">${fmt(pct,0)}% пути пройдено</div></div>
     <div class="sumcard"><div class="lbl">Темп в неделю</div><div class="v num">${perWeek ? fmt(perWeek,0) : '-'}</div>
